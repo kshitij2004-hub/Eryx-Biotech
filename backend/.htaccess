@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# If the request isn't for an actual existing folder
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# And if the request with .php appended is an actual existing file
+RewriteCond %{REQUEST_FILENAME}.php -f
+
+# Implicitly route to the .php file without changing the URL bar
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
