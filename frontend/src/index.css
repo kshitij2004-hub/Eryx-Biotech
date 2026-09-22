@@ -1,4 +1,8 @@
+/* 🎨 CENTRAL STRUCTURAL DESIGN TOKENS MATRIX */
 :root {
+  /* ==========================================================================
+     DEFAULT DARK MODE (Your exact core design specs)
+     ========================================================================== */
   --obsidian: #08080B;
   --deep-space: #12121A;
   --royal-purple: #3B2AA8;
@@ -7,106 +11,183 @@
   --soft-gold: #FFD84D;
   --soft-white: #F3F4F6;
   --muted-gray: #A1A1B5;
+
+  /* Abstracted Theme Layer Paths */
+  --bg-main: var(--obsidian);
+  --bg-card: rgba(18, 18, 26, 0.6);
+  --bg-input: rgba(8, 8, 11, 0.8);
+  
+  /* Text Tokens for Dark Mode */
+  --text-primary: var(--soft-white);   /* Crisp near-white text */
+  --text-secondary: var(--muted-gray); /* Readable light slate-gray */
+  --text-labels: var(--muted-gray);    /* Label colors */
+  
+  --border-glow: rgba(91, 63, 255, 0.2);
+  --border-element: rgba(161, 161, 181, 0.15);
+  --border-input-default: rgba(161, 161, 181, 0.2);
+  --radial-glow-1: rgba(59, 42, 168, 0.15);
+  --radial-glow-2: rgba(91, 63, 255, 0.08);
+  --panel-shadow: rgba(0, 0, 0, 0.7);
+  --terminal-bg: #000000;
+  --product-card-hover: rgba(59, 42, 168, 0.1);
+}
+
+html.light {
+  /* ==========================================================================
+     🪻 LIGHT MODE SPECTRAL SWAP (High-Contrast Text Fix)
+     ========================================================================== */
+  --bg-main: #F4F3F9;          /* Clean, crisp light lavender-gray background */
+  --bg-card: #FFFFFF;          /* Solid pure white cards for maximum legibility */
+  --bg-input: #F9F8FC;         /* Light neutral background for inputs */
+  
+  /* 👁️ High-Contrast Text Tokens for Light Mode */
+  --text-primary: #12101C;     /* Deep obsidian-lavender (almost black) for primary headers/text */
+  --text-secondary: #4A4560;   /* Rich dark slate-purple for descriptions, subtitles & secondary text */
+  --text-labels: #36304A;      /* Bold, clear dark purple-gray for input labels */
+  
+  --border-glow: #D5CEF2;     
+  --border-element: #E1DDF0;  
+  --border-input-default: #A69ECA; /* Darker, clearly defined borders for inputs on light screens */
+  --radial-glow-1: rgba(91, 63, 255, 0.04); 
+  --radial-glow-2: rgba(245, 197, 24, 0.03);
+  --panel-shadow: rgba(19, 15, 36, 0.08); 
+  --terminal-bg: #161421;     
+  --product-card-hover: #EBE7F7; 
+}
+
+/* ==========================================================================
+   GLOBAL APP DEFAULTS & VIEWPORT ENFORCEMENT
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  background-color: var(--obsidian);
-  color: var(--soft-white);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  overflow-x: hidden;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden; /* Hard limit stopping broken side horizontal panning on smartphones */
+  width: 100%;
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .eryx-app-container {
   min-height: 100vh;
-  padding: 40px 20px;
-  background: radial-gradient(circle at 80% 20%, rgba(59, 42, 168, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 10% 80%, rgba(91, 63, 255, 0.08) 0%, transparent 40%);
+  width: 100%;
+  padding: 40px max(4%, 16px); /* Adaptive side margins for desktop and devices */
+  background: radial-gradient(circle at 80% 20%, var(--radial-glow-1) 0%, transparent 50%),
+              radial-gradient(circle at 10% 80%, var(--radial-glow-2) 0%, transparent 40%);
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: background 0.3s ease;
 }
 
-/* Premium Clinical Glass Panel Architecture */
+/* ==========================================================================
+   LAYOUT ARCHITECTURE & RESPONSIVE CONTAINERS
+   ========================================================================== */
 .eryx-glass-panel {
-  background: rgba(18, 18, 26, 0.6);
+  background: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(91, 63, 255, 0.2);
+  border: 1px solid var(--border-glow);
   border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
-  padding: 35px;
+  box-shadow: 0 24px 60px var(--panel-shadow);
+  padding: 35px 24px; /* Adaptive cell padding layout bounds */
   width: 100%;
   max-width: 480px;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.nav-link {
-  color: #A1A1B5;
-  text-decoration: none;
-}
 
-.nav-link.active {
-  color: #F3F4F6 !important;
-}
-
-/* Pharma Hover Lift Interactivity */
 .eryx-glass-panel:hover {
   border-color: rgba(91, 63, 255, 0.45);
-  box-shadow: 0 30px 70px rgba(91, 63, 255, 0.12), 0 0 30px rgba(0,0,0,0.8);
+  box-shadow: 0 30px 70px rgba(91, 63, 255, 0.12), 0 0 30px var(--panel-shadow);
   transform: translateY(-4px);
 }
 
 .eryx-wide-dashboard {
-  max-width: 1100px;
+  max-width: 1200px;
 }
 
+.eryx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Fluidly swaps from side-by-side to stacked */
+  gap: 30px;
+  width: 100%;
+}
+
+/* NAVIGATION SYSTEM BAR */
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-link.active {
+  color: var(--text-primary) !important;
+}
+
+/* TYPOGRAPHY MATRIX */
 .eryx-header {
   text-align: center;
   margin-bottom: 40px;
+  width: 100%;
 }
 
 .eryx-logo {
-  font-size: 38px;
+  font-size: clamp(28px, 5vw, 38px); /* Scales font-size gracefully based on screen boundaries */
   font-weight: 900;
-  letter-spacing: 6px;
+  letter-spacing: clamp(2px, 1vw, 6px);
   margin: 0;
-  background: linear-gradient(135deg, var(--soft-white) 30%, var(--muted-gray) 100%);
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .eryx-subtitle {
-  color: var(--muted-gray);
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-top: 5px;
 }
 
+/* ==========================================================================
+   FORMS, INTERACTIVE TRACKS & CONTROLS
+   ========================================================================== */
 .form-group {
   margin-bottom: 22px;
+  width: 100%;
 }
 
 .form-group label {
   display: block;
-  font-size: 12px;
-  color: var(--muted-gray);
+  font-size: 11px;
+  color: var(--text-labels);
   text-transform: uppercase;
   letter-spacing: 1.5px;
   margin-bottom: 8px;
+  font-weight: 700;
 }
 
-/* Input Border Glow Reaction */
 .eryx-input {
   width: 100%;
   padding: 12px 16px;
-  background: rgba(8, 8, 11, 0.8);
-  border: 1px solid rgba(161, 161, 181, 0.2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input-default);
   border-radius: 8px;
-  color: var(--soft-white);
+  color: var(--text-primary);
   font-size: 15px;
   box-sizing: border-box;
   transition: all 0.3s ease;
+}
+
+.eryx-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .eryx-input:focus {
@@ -115,14 +196,13 @@ body {
   box-shadow: 0 0 10px rgba(91, 63, 255, 0.3);
 }
 
-/* Gold Circuit Shift Buttons */
 .eryx-btn-gold {
   width: 100%;
   padding: 14px;
   background: linear-gradient(135deg, var(--royal-purple) 0%, rgba(91, 63, 255, 0.8) 100%);
   border: 1px solid rgba(91, 63, 255, 0.4);
   border-radius: 8px;
-  color: var(--soft-white);
+  color: #FFFFFF; /* Retain premium high contrast text across fields */
   font-weight: 600;
   letter-spacing: 1px;
   cursor: pointer;
@@ -136,37 +216,29 @@ body {
   transform: scale(1.01);
 }
 
-.eryx-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  width: 100%;
-}
-
-@media (max-width: 768px) {
-  .eryx-grid { grid-template-columns: 1fr; }
-}
-
+/* ==========================================================================
+   PRODUCT REGISTRY DISPLAY ROW & LOG MODULES
+   ========================================================================== */
 .product-card {
-  background: rgba(18, 18, 26, 0.4);
-  border: 1px solid rgba(161, 161, 181, 0.15);
+  background: var(--bg-card);
+  border: 1px solid var(--border-element);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 15px;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
-/* Catalog Hover Card Effect */
 .product-card:hover {
   border-color: var(--neon-purple);
   transform: translateY(-3px);
-  background: rgba(59, 42, 168, 0.1);
+  background: var(--product-card-hover);
 }
 
 .badge-purple {
   background: rgba(91, 63, 255, 0.2);
   border: 1px solid var(--neon-purple);
-  color: #c7bfff;
+  color: var(--text-primary);
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -176,15 +248,20 @@ body {
 .badge-gold {
   background: rgba(245, 197, 24, 0.15);
   border: 1px solid var(--gold);
-  color: var(--soft-gold);
+  color: #D4A80F;
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 11px;
+  font-weight: 700;
+}
+
+html.dark .badge-gold {
+  color: #FFD84D;
 }
 
 .system-log-terminal {
   margin-top: 25px;
-  background: #000;
+  background: var(--terminal-bg);
   border-left: 3px solid var(--gold);
   padding: 12px 16px;
   border-radius: 4px;
@@ -194,4 +271,56 @@ body {
   width: 100%;
   max-width: 480px;
   box-sizing: border-box;
+}
+
+/* ==========================================================================
+   📱 100% UNIFIED PHONE FORMAT MEDIA COMPLIANCE OVERRIDES
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Universal resetting matrix preventing absolute containers from sizing over phone viewports */
+  form, .auth-container, .eryx-glass-panel, div[style*="maxWidth: 420px"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 24px 16px !important;
+  }
+
+  .eryx-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+
+  /* Structural side-by-side components flip smoothly into stacked sections */
+  .catalog-sidebar, .data-registry-stream-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 20px;
+  }
+
+  /* Universal Navigation Adaptations */
+  header {
+    height: auto !important;
+    padding: 12px 8px !important;
+  }
+
+  header > div {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: center !important;
+    padding: 0 10px !important;
+  }
+
+  nav {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 10px 14px !important;
+    font-size: 12px !important;
+    width: 100%;
+  }
+
+  main {
+    padding-top: 140px !important; /* Dynamically accommodates stacked mobile navbar heights cleanly */
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
 }

@@ -1,56 +1,113 @@
 <?php
 // backend/api/get_products.php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Content-Type: application/json; charset=UTF-8");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
 
 require_once '../config/db.php';
 
-// Check if a specific ID is being queried
-$id = $_GET['id'] ?? null;
+if (!headers_sent()) {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Content-Type: application/json; charset=UTF-8");
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit(0);
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Method not allowed. Use GET."]);
+    exit();
+}
+
+function normalizeImagePath(?string $url): string {
+    if (empty($url)) return '';
+    if (strpos($url, 'http') === 0) return $url;
+    return '/' . ltrim($url, '/');
+}
 
 try {
-    if ($id) {
-        // MODE A: Single Product Retrieval (For ProductDetail.jsx)
-        $query = "SELECT * FROM products WHERE id = :id LIMIT 1";
-        $stmt = $pdo->prepare($query);
-        $stmt->execute([':id' => $id]);
-        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    $products = [];
+    $productId = isset($_GET['id']) ? intval($_GET['id']) : null;
 
-        if ($product) {
-            echo json_encode([
-                "status" => "success",
-                "data" => $product
-            ]);
-        } else {
-            http_response_code(404);
-            echo json_encode([
-                "status" => "error",
-                "message" => "Formulation record not found."
-            ]);
+    if (isset($pdo) && $pdo instanceof PDO) {
+        if ($productId) {
+            $stmt = $pdo->prepare("SELECT * FROM products WHERE id = :id LIMIT 1");
+            $stmt->execute([':id' => $productId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($row) {
+                $imgKey = isset($row['image_path']) ? 'image_path' : (isset($row['image_url']) ? 'image_url' : (isset($row['image']) ? 'image' : null));
+                if ($imgKey) {
+                    $row[$imgKey] = normalizeImagePath($row[$imgKey] ?? null);
+                }
+                echo json_encode(["status" => "success", "data" => $row]);
+                exit();
+            } else {
+                http_response_code(404);
+                echo json_encode(["status" => "error", "message" => "Product not found"]);
+                exit();
+            }
         }
-    } else {
-        // MODE B: Bulk Product Retrieval (For Admin Dashboard & Main Catalog Grid)
-        $query = "SELECT * FROM products ORDER BY id DESC";
-        $stmt = $pdo->prepare($query);
-        $stmt->execute();
+
+        $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo json_encode([
-            "status" => "success",
-            "data" => $products
-        ]);
+        foreach ($products as &$row) {
+            $imgKey = isset($row['image_path']) ? 'image_path' : (isset($row['image_url']) ? 'image_url' : (isset($row['image']) ? 'image' : null));
+            if ($imgKey) {
+                $row[$imgKey] = normalizeImagePath($row[$imgKey] ?? null);
+            }
+        }
+        unset($row);
+    } elseif (isset($conn)) {
+        if ($productId) {
+            $stmt = $conn->prepare("SELECT * FROM products WHERE id = ? LIMIT 1");
+            $stmt->bind_param("i", $productId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($row = $result->fetch_assoc()) {
+                $imgKey = isset($row['image_path']) ? 'image_path' : (isset($row['image_url']) ? 'image_url' : (isset($row['image']) ? 'image' : null));
+                if ($imgKey) {
+                    $row[$imgKey] = normalizeImagePath($row[$imgKey] ?? null);
+                }
+                echo json_encode(["status" => "success", "data" => $row]);
+                $stmt->close();
+                $conn->close();
+                exit();
+            } else {
+                http_response_code(404);
+                echo json_encode(["status" => "error", "message" => "Product not found"]);
+                $stmt->close();
+                $conn->close();
+                exit();
+            }
+        }
+
+        $result = $conn->query("SELECT * FROM products ORDER BY id DESC");
+        if (!$result) throw new Exception("Query failed: " . $conn->error);
+
+        while ($row = $result->fetch_assoc()) {
+            $imgKey = isset($row['image_path']) ? 'image_path' : (isset($row['image_url']) ? 'image_url' : (isset($row['image']) ? 'image' : null));
+            if ($imgKey) {
+                $row[$imgKey] = normalizeImagePath($row[$imgKey] ?? null);
+            }
+            $products[] = $row;
+        }
+        $result->free();
+        $conn->close();
+    } else {
+        throw new Exception("No valid database connection available.");
     }
-} catch (PDOException $e) {
+
+    http_response_code(200);
+    echo json_encode(["status" => "success", "data" => $products]);
+
+} catch (Throwable $e) {
+    error_log($e->getMessage());
     http_response_code(500);
-    echo json_encode([
-        "status" => "error",
-        "message" => "Database execution engine error: " . $e->getMessage()
-    ]);
+    echo json_encode(["status" => "error", "message" => "Internal Server Error"]);
 }
 ?>

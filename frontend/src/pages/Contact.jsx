@@ -30,18 +30,18 @@ function Contact() {
       {/* 📡 LEFT PANEL: OFFICIAL CORPORATE DIRECTORY VECTOR */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
         <div>
-          <h2 style={{ fontSize: '36px', fontWeight: '700', color: '#F3F4F6', marginBottom: '10px', letterSpacing: '-0.5px' }}>
+          <h2 style={{ fontSize: '36px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px', letterSpacing: '-0.5px' }}>
             Contact Us
           </h2>
           <div style={{ height: '2px', width: '60px', background: '#F5C518', marginBottom: '25px' }}></div>
         </div>
 
         {/* Head Office Node */}
-        <div style={{ padding: '20px', background: '#12121A', borderLeft: '3px solid #F5C518', borderRadius: '0 4px 4px 0' }}>
-          <h4 style={{ color: '#F3F4F6', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ padding: '20px', background: 'var(--bg-card)', borderLeft: '3px solid #F5C518', borderRadius: '0 4px 4px 0', transition: 'background 0.3s' }}>
+          <h4 style={{ color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             📍 Head Office
           </h4>
-          <p style={{ color: '#A1A1B5', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
             Corporate Office: A/6-202, AMBERNATH(W), MIDC,<br />
             THANE, MAHARASHTRA - 421505
           </p>
@@ -49,8 +49,8 @@ function Contact() {
 
         {/* Comms Tier (Phone & WhatsApp) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          <div style={{ padding: '20px', background: '#12121A', borderRadius: '4px', border: '1px solid rgba(161,161,181,0.1)' }}>
-            <h4 style={{ color: '#F3F4F6', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+          <div style={{ padding: '20px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px solid var(--border-color, rgba(161,161,181,0.15))', transition: 'background 0.3s, border 0.3s' }}>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
               📞 Phone
             </h4>
             <a href="tel:+919136506985" style={{ color: '#F5C518', fontSize: '16px', fontWeight: '600', textDecoration: 'none' }}>
@@ -58,8 +58,8 @@ function Contact() {
             </a>
           </div>
 
-          <div style={{ padding: '20px', background: '#12121A', borderRadius: '4px', border: '1px solid rgba(161,161,181,0.1)' }}>
-            <h4 style={{ color: '#F3F4F6', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+          <div style={{ padding: '20px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px solid var(--border-color, rgba(161,161,181,0.15))', transition: 'background 0.3s, border 0.3s' }}>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
               💬 WhatsApp
             </h4>
             <a href="https://wa.me/919136506985" target="_blank" rel="noopener noreferrer" style={{ color: '#2ecc71', fontSize: '16px', fontWeight: '600', textDecoration: 'none' }}>
@@ -70,31 +70,31 @@ function Contact() {
 
         {/* Email & Corporate Registration */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          <div style={{ padding: '20px', background: '#12121A', borderRadius: '4px', border: '1px solid rgba(161,161,181,0.1)' }}>
-            <h4 style={{ color: '#F3F4F6', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+          <div style={{ padding: '20px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px solid var(--border-color, rgba(161,161,181,0.15))', transition: 'background 0.3s, border 0.3s' }}>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
               ✉️ Email
             </h4>
-            <a href="mailto:eryxhealthcare@gmail.com" style={{ color: '#F5C518', fontSize: '15px', textDecoration: 'none', breakWord: 'break-all' }}>
+            <a href="mailto:eryxhealthcare@gmail.com" style={{ color: '#F5C518', fontSize: '15px', textDecoration: 'none', wordBreak: 'break-all' }}>
               eryxhealthcare@gmail.com
             </a>
           </div>
 
-          <div style={{ padding: '20px', background: '#12121A', borderRadius: '4px', border: '1px solid rgba(161,161,181,0.1)' }}>
-            <h4 style={{ color: '#F3F4F6', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+          <div style={{ padding: '20px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px solid var(--border-color, rgba(161,161,181,0.15))', transition: 'background 0.3s, border 0.3s' }}>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
               🔑 CIN
             </h4>
-            <code style={{ color: '#A1A1B5', fontSize: '13px', fontFamily: 'monospace', background: '#08080B', padding: '4px 6px', borderRadius: '2px' }}>
+            <code style={{ color: 'var(--text-secondary)', fontSize: '13px', fontFamily: 'monospace', background: 'var(--bg-input)', padding: '4px 6px', borderRadius: '2px' }}>
               U24100MH2018PTC317668
             </code>
           </div>
         </div>
 
         {/* Branch / Logistical Nodes */}
-        <div style={{ padding: '20px', background: '#12121A', borderLeft: '3px solid #6f42c1', borderRadius: '0 4px 4px 0' }}>
-          <h4 style={{ color: '#F3F4F6', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ padding: '20px', background: 'var(--bg-card)', borderLeft: '3px solid #6f42c1', borderRadius: '0 4px 4px 0', transition: 'background 0.3s' }}>
+          <h4 style={{ color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             🏢 Branch Office / Warehouse
           </h4>
-          <p style={{ color: '#A1A1B5', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
             Central Depot/ Warehouse: Village- Chaturpur Ichhuri,<br />
             P.O. - Kurebhar, Ayodhya- Sultanpur Road,<br />
             Dist- Sultanpur, 228151

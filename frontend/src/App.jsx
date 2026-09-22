@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, NavLink, Navigate, Link, useNavigate } from 'react-router-dom';
+import { Routes, Route, NavLink, Link, useNavigate } from 'react-router-dom';
 import ProductsCatalog from './pages/Products';
 import ProductDetail from './components/ProductDetail';
 import { productsList } from './data/productData';
@@ -14,33 +14,52 @@ import Contact from './pages/Contact';
 import Auth from './pages/Auth'; 
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
-import PortalDirectory from './pages/PortalDirectory'; // 🧭 Added for HTML Sitemap layout
+import PortalDirectory from './pages/PortalDirectory';
 
-// 🔒 Dedicated Standalone Legal & Policy View Components
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import RefundPolicy from './pages/RefundPolicy';
 import PaymentTerms from './pages/PaymentTerms';
 import OrderTerms from './pages/OrderTerms';
 
-// 🔌 Global structural components
 import Footer from './components/common/Footer';
+
 function App() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
-  const [currentPage, setCurrentPage] = useState('home');
-  const [user, setUser] = useState({ name: 'ERYX-ROOT-99', role: 'admin' });
+  const [user, setUser] = useState(null);
+
+  const [isLightMode, setIsLightMode] = useState(() => {
+    return localStorage.getItem('eryx-app-theme') === 'light';
+  });
+
+  useEffect(() => {
+    if (isLightMode) {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      localStorage.setItem('eryx-app-theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      localStorage.setItem('eryx-app-theme', 'dark');
+    }
+  }, [isLightMode]);
+
+  const darkMode = !isLightMode;
 
   useEffect(() => {
     const fetchPublicRegistry = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch('/backend/api/get_products.php');
         if (res.ok) {
-          const data = await res.json();
-          setProducts(data);
+          const result = await res.json();
+          if (result.status === 'success' && Array.isArray(result.data)) {
+            setProducts(result.data);
+          } else if (Array.isArray(result)) {
+            setProducts(result);
+          }
         }
       } catch (err) {
-        // 🧪 Realistic Clinical Product Lineup Fallback Data
         setProducts([
           { 
             _id: '1', 
@@ -72,65 +91,22 @@ function App() {
     fetchPublicRegistry();
   }, []);
 
-  const handleNavigation = (targetPage) => {
-    if (targetPage === 'safety' && !user) {
-      setCurrentPage('login');
-    } else if (targetPage === 'dashboard' && user?.role !== 'admin') {
-      setCurrentPage('home');
-    } else {
-      setCurrentPage(targetPage);
-    }
-    // Automatically smooth scroll to top on page switches
+  const handleNavigation = (targetPath) => {
+    navigate(targetPath);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLogout = () => {
     setUser(null);
-    setCurrentPage('home');
+    navigate('/');
   };
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home': 
-        return <Home products={products} handleNavigation={handleNavigation} />;
-      case 'about': 
-        return <About />;
-      case 'products': 
-        return <Products products={products} />;
-      case 'safety': 
-        return <DrugSafety user={user} />;
-      case 'contact': 
-        return <Contact />;
-      case 'login': 
-        return <Auth setUser={setUser} setCurrentPage={setCurrentPage} />;
-      case 'dashboard': 
-        return <AdminDashboard products={products} />;
-      
-      // 🧭 HTML Visual Portal Directory Route
-      case 'sitemap':
-        return <PortalDirectory handleNavigation={handleNavigation} />;
-      
-      // 🛡️ Custom Standalone Policy Routes
-      case 'privacy':
-        return <PrivacyPolicy handleNavigation={handleNavigation} />;
-      case 'terms':
-        return <TermsConditions handleNavigation={handleNavigation} />;
-      case 'refunds':
-        return <RefundPolicy handleNavigation={handleNavigation} />;
-      case 'payment':
-        return <PaymentTerms handleNavigation={handleNavigation} />;
-      case 'order-terms':
-        return <OrderTerms handleNavigation={handleNavigation} />;
-
-      default: 
-        return <Home products={products} handleNavigation={handleNavigation} />;
-    }
-  };
   if (!localStorage.getItem('eryx_products')) {
     localStorage.setItem('eryx_products', JSON.stringify(productsList));
   }
+
   return (
-    <div className="eryx-app-container" style={{ backgroundColor: '#08080A', color: '#F3F4F6', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="eryx-app-container" style={{ backgroundColor: darkMode ? '#08080A' : '#FFFFFF', color: darkMode ? '#FFFFFF' : '#1F2937', minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       
       {/* 🌐 GLOBAL STICKY GLASSMORPHISM NAVBAR */}
       <header style={{ 
@@ -138,93 +114,106 @@ function App() {
         top: 0, 
         left: 0, 
         width: '100%', 
-        height: '80px',
-        background: 'rgba(8, 8, 11, 0.75)', 
+        height: 'auto',
+        minHeight: '80px',
+        background: darkMode ? 'rgba(19, 19, 26, 0.8)' : 'rgba(255, 255, 255, 0.82)', 
         backdropFilter: 'blur(12px)', 
         WebkitBackdropFilter: 'blur(12px)', 
-        borderBottom: '1px solid rgba(161, 161, 181, 0.1)', 
+        borderBottom: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`, 
         zIndex: 1000,
         display: 'flex',
-        alignItems: 'center'
+        alignItems: 'center',
+        padding: '10px 0',
+        transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}>
-        <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 max(4%, 20px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
           
-          {/* 🏷️ BRAND LOGO IMAGE ANCHOR */}
           <div 
             style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} 
-            onClick={() => navigate('/')}
+            onClick={() => handleNavigation('/')}
           >
             <img 
               src="/assets/logos/eryx-logo.png" 
               alt="Eryx Corporate Logo" 
-              style={{ height: '70px', width: 'auto', objectFit: 'contain' }} 
+              style={{ height: '60px', width: 'auto', objectFit: 'contain' }} 
             />
           </div>
           
-          {/* 🧭 NAVIGATION LINKS */}
-          <nav style={{ display: 'flex', gap: '30px', fontSize: '13px', fontWeight: '600', alignItems: 'center' }}>
-            
-  
-  {/* The 'end' prop ensures Home only matches exactly "/" */}
-  <NavLink to="/" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>HOME</NavLink>
-  <NavLink to="/about" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>ABOUT</NavLink>
-  <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>PRODUCTS</NavLink>
-  <NavLink to="/safety" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>DRUG SAFETY</NavLink>
-  <NavLink to="/contact" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>CONTACT</NavLink>
+          <nav style={{ display: 'flex', gap: '24px', fontSize: '13px', fontWeight: '600', alignItems: 'center', flexWrap: 'wrap' }}>
+            <NavLink to="/" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>HOME</NavLink>
+            <NavLink to="/about" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>ABOUT</NavLink>
+            <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>PRODUCTS</NavLink>
+            <NavLink to="/safety" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>DRUG SAFETY</NavLink>
+            <NavLink to="/contact" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>CONTACT</NavLink>
 
-  {user && user.role === 'admin' && (
-    <NavLink to="/dashboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} style={{ color: '#5B3FFF' }}>
-      DASHBOARD
-    </NavLink>
-  )}
-  
-  {user ? (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', borderLeft: '1px solid rgba(161,161,181,0.2)', paddingLeft: '20px' }}>
-      <NavLink to={user.role === 'admin' ? '/dashboard' : '/safety'} style={{ fontSize: '12px', color: '#5B3FFF', textDecoration: 'none', fontWeight: '600' }}>{user.name}</NavLink>
-      <button onClick={handleLogout} style={{ background: 'none', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '4px 12px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>LOGOUT</button>
-    </div>
-  ) : (
-    <NavLink to="/login" style={{ background: 'none', border: 'none', color: '#F5C518', cursor: 'pointer', borderLeft: '1px solid rgba(161,161,181,0.2)', paddingLeft: '20px', textDecoration: 'none' }}>LOGIN / SIGN UP</NavLink>
-  )}
-</nav>
+            {user && user.role === 'admin' && (
+              <NavLink to="/dashboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} style={{ color: '#5B3FFF' }}>
+                DASHBOARD
+              </NavLink>
+            )}
+
+            <button
+              onClick={() => setIsLightMode(!isLightMode)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'}`,
+                backgroundColor: darkMode ? '#121216' : '#F3F4F6',
+                color: darkMode ? '#FFFFFF' : '#1F2937',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: '700',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s ease',
+                outline: 'none'
+              }}
+            >
+              {isLightMode ? '🌙 Dark Mode' : '🪻 Light Mode'}
+            </button>
+            
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', borderLeft: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`, paddingLeft: '20px' }}>
+                <NavLink to={user.role === 'admin' ? '/dashboard' : '/safety'} style={{ fontSize: '12px', color: '#5B3FFF', textDecoration: 'none', fontWeight: '600' }}>{user.name}</NavLink>
+                <button onClick={handleLogout} style={{ background: 'none', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '4px 12px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>LOGOUT</button>
+              </div>
+            ) : (
+              <NavLink to="/login" style={{ background: 'none', border: 'none', color: darkMode ? '#F5C518' : '#D97706', cursor: 'pointer', borderLeft: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`, paddingLeft: '20px', textDecoration: 'none' }}>LOGIN / SIGN UP</NavLink>
+            )}
+          </nav>
         </div>
       </header>
 
-      {/* 🛒 MAIN CONTENT CONTAINER */}
-      <main style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '120px 20px 60px 20px', flex: 1, minHeight: '75vh' }}>
-  <Routes>
-  <Route path="/" element={<Home products={products} handleNavigation={handleNavigation} />} />
-  <Route path="/about" element={<About />} />
-  <Route path="/products" element={<Products products={products} />} />
-  <Route path="/products/:productId" element={<ProductDetail />} />
-  <Route path="/contact" element={<Contact />} />
-  <Route path="/login" element={<Auth setUser={setUser} />} />
-  <Route path="/safety" element={<DrugSafety user={user} />} />
-  
-  
-  {/* These are protected: they check for 'user' before showing the page */}
+      {/* 🛒 MAIN CONTENT CONTAINER (Top padding accounts for fixed header) */}
+      <main style={{ width: '100%', margin: '0 auto', paddingTop: '80px', flex: 1, minHeight: '75vh', boxSizing: 'border-box' }}>
+        <Routes>
+          <Route path="/" element={<Home products={products} handleNavigation={handleNavigation} darkMode={darkMode} />} />
+          <Route path="/about" element={<About darkMode={darkMode} />} />
+          <Route path="/products" element={<Products products={products} darkMode={darkMode} />} />
+          <Route path="/products/:productId" element={<ProductDetail darkMode={darkMode} />} />
+          <Route path="/contact" element={<Contact darkMode={darkMode} />} />
+          <Route path="/login" element={<Auth setUser={setUser} darkMode={darkMode} />} />
+          <Route path="/safety" element={<DrugSafety user={user} darkMode={darkMode} />} />
+          
+          <Route path="/dashboard" element={
+            <ProtectedRoute user={user}>
+              <Dashboard products={products} darkMode={darkMode} />
+            </ProtectedRoute>
+          } />
 
-  <Route path="/dashboard" element={
-    <ProtectedRoute user={user}>
-      <Dashboard products={products} />
-    </ProtectedRoute>
-  } />
+          <Route path="/sitemap" element={<PortalDirectory handleNavigation={handleNavigation} darkMode={darkMode} />} />
+          <Route path="/privacy" element={<PrivacyPolicy handleNavigation={handleNavigation} darkMode={darkMode} />} />
+          <Route path="/terms" element={<TermsConditions handleNavigation={handleNavigation} darkMode={darkMode} />} />
+          <Route path="/refunds" element={<RefundPolicy handleNavigation={handleNavigation} darkMode={darkMode} />} />
+          <Route path="/payment" element={<PaymentTerms handleNavigation={handleNavigation} darkMode={darkMode} />} />
+          <Route path="/order-terms" element={<OrderTerms handleNavigation={handleNavigation} darkMode={darkMode} />} />
+        </Routes>
+      </main>
 
-  <Route path="/sitemap" element={<PortalDirectory handleNavigation={handleNavigation} />} />
-  <Route path="/privacy" element={<PrivacyPolicy handleNavigation={handleNavigation} />} />
-  <Route path="/terms" element={<TermsConditions handleNavigation={handleNavigation} />} />
-  <Route path="/refunds" element={<RefundPolicy handleNavigation={handleNavigation} />} />
-  <Route path="/payment" element={<PaymentTerms handleNavigation={handleNavigation} />} />
-  <Route path="/order-terms" element={<OrderTerms handleNavigation={handleNavigation} />} />
-</Routes>
-</main>
-
-      {/* 🏙️ RENDER FIXED GLOBAL FOOTER WITH ROUTING PROPS */}
-      <Footer handleNavigation={handleNavigation} />
+      {/* 🏙️ FIXED GLOBAL FOOTER LAYER */}
+      <Footer handleNavigation={handleNavigation} darkMode={darkMode} />
       
     </div>
-    
-    
   );
 }
 

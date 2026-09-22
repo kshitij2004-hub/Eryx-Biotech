@@ -1,6 +1,16 @@
 import React from 'react';
 
-function GroupAssociations() {
+function GroupAssociations({ darkMode = true, currentTheme }) {
+  // Fallback theme in case it's rendered independently
+  const theme = currentTheme || {
+    textMain: darkMode ? '#F3F4F6' : '#1F2937',
+    textMuted: darkMode ? '#A1A1B5' : '#4B5563',
+    cardBg: darkMode ? '#111116' : '#FFFFFF',
+    cardAltBg: darkMode ? '#14141F' : '#F9FAFB',
+    cardBorder: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
+    accentPurple: '#5B3FFF',
+  };
+
   // Exact names and matching public official portals
   const partners = [
     { 
@@ -40,7 +50,7 @@ function GroupAssociations() {
       <span style={{ 
         fontSize: '11px', 
         fontWeight: '700', 
-        color: '#5B3FFF', 
+        color: theme.accentPurple, 
         letterSpacing: '2px', 
         textTransform: 'uppercase', 
         display: 'block', 
@@ -52,9 +62,10 @@ function GroupAssociations() {
       <h2 style={{ 
         fontSize: '32px', 
         fontWeight: '700', 
-        color: '#F3F4F6', 
+        color: theme.textMain, // Dynamically switches color based on theme!
         margin: '0 0 12px 0',
-        letterSpacing: '0.5px'
+        letterSpacing: '0.5px',
+        transition: 'color 0.3s ease'
       }}>
         Associated Healthcare & Distribution Channels
       </h2>
@@ -63,7 +74,7 @@ function GroupAssociations() {
       <div style={{ 
         width: '48px', 
         height: '3px', 
-        backgroundColor: '#5B3FFF', 
+        backgroundColor: theme.accentPurple, 
         margin: '0 auto 50px auto',
         borderRadius: '2px'
       }}></div>
@@ -74,7 +85,8 @@ function GroupAssociations() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', 
         gap: '20px',
         maxWidth: '1200px',
-        margin: '0 auto'
+        margin: '0 auto',
+        padding: '0 20px'
       }}>
         {partners.map((partner, index) => (
           <a 
@@ -84,8 +96,8 @@ function GroupAssociations() {
             rel="noopener noreferrer"
             style={{ 
               textDecoration: 'none',
-              background: '#111116', 
-              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              background: theme.cardBg, 
+              border: `1px solid ${theme.cardBorder}`, 
               borderRadius: '8px', 
               padding: '35px 20px', 
               display: 'flex', 
@@ -96,20 +108,20 @@ function GroupAssociations() {
               cursor: 'pointer'
             }}
             onMouseEnter={(e) => { 
-              e.currentTarget.style.borderColor = '#5B3FFF'; 
+              e.currentTarget.style.borderColor = theme.accentPurple; 
               e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.background = '#14141F';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(91, 63, 255, 0.15)';
+              e.currentTarget.style.background = theme.cardAltBg;
+              e.currentTarget.style.boxShadow = darkMode ? '0 8px 24px rgba(91, 63, 255, 0.15)' : '0 8px 24px rgba(0, 0, 0, 0.08)';
             }}
             onMouseLeave={(e) => { 
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'; 
+              e.currentTarget.style.borderColor = theme.cardBorder; 
               e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.background = '#111116';
+              e.currentTarget.style.background = theme.cardBg;
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
             <h4 style={{ 
-              color: '#F3F4F6', 
+              color: theme.textMain, // Dynamically switches partner names color too!
               fontSize: '15px', 
               fontWeight: '600', 
               margin: 0,
@@ -117,8 +129,6 @@ function GroupAssociations() {
               letterSpacing: '0.3px',
               transition: 'color 0.2s ease'
             }}
-            onMouseEnter={(e) => e.target.style.color = '#FFFFFF'}
-            onMouseLeave={(e) => e.target.style.color = '#F3F4F6'}
             >
               {partner.name}
             </h4>

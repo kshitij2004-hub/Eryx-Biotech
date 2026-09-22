@@ -1,10 +1,20 @@
-RewriteEngine On
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
 
-# If the request isn't for an actual existing folder
-RewriteCond %{REQUEST_FILENAME} !-d
+  # 1. Do NOT rewrite requests targeting the backend folder (let PHP handle APIs normally)
+  RewriteCond %{REQUEST_URI} ^/backend [NC]
+  RewriteRule ^ - [L,NC]
 
-# And if the request with .php appended is an actual existing file
-RewriteCond %{REQUEST_FILENAME}.php -f
+  # 2. If the requested file or folder physically exists, serve it directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
-# Implicitly route to the .php file without changing the URL bar
-RewriteRule ^([^\.]+)$ $1.php [NC,L]
+  # 3. Handle Clean PHP URLs (if a request like /about maps to about.php)
+  RewriteCond %{REQUEST_FILENAME}.php -f
+  RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+  # 4. Fallback everything else to index.html for React Router
+  RewriteRule ^ index.html [L]
+</IfModule>

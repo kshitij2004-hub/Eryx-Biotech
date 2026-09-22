@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-// 🌐 Centralized Environment Network Routing Matrix
-const BASE_URL = 'http://localhost/eryx-biotech-platform';
+// 🌐 Dynamic Environment Network Routing Matrix
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const BASE_URL = isLocal ? 'http://localhost/eryx-biotech-platform' : '';
 const API_URL = `${BASE_URL}/backend/api`;
 const ASSET_URL = `${BASE_URL}/public`;
 
@@ -10,39 +11,64 @@ function ProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
 
-  // 🔄 Reactive State Containers
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔄 Dynamic Live Database Synchronization Hook
   useEffect(() => {
     const fetchProductData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Query the hybrid PHP script using the targeted URL identifier parameter
+        // Fetch products endpoint (handles both single item queries or full list fallback matching)
         const response = await fetch(`${API_URL}/get_products.php?id=${productId}`);
         
         if (!response.ok) {
-          if (response.status === 404) {
-            setProduct(null);
-            return;
-          }
-          throw new Error(`Server returned network context status layer code: ${response.status}`);
+          throw new Error(`Server status code: ${response.status}`);
         }
 
         const result = await response.json();
         
+        let foundProduct = null;
+
         if (result.status === 'success') {
-          setProduct(result.data);
+          // Check if result.data is an array (list) or a single object
+          if (Array.isArray(result.data)) {
+            foundProduct = result.data.find(p => String(p._id || p.id) === String(productId));
+          } else if (result.data && typeof result.data === 'object') {
+            foundProduct = result.data;
+          }
+        } else if (Array.isArray(result)) {
+          // Direct array response fallback
+          foundProduct = result.find(p => String(p._id || p.id) === String(productId));
+        }
+
+        // Final fallback: check localStorage if API didn't return a direct match
+        if (!foundProduct) {
+          const localProducts = JSON.parse(localStorage.getItem('eryx_products') || '[]');
+          foundProduct = localProducts.find(p => String(p._id || p.id) === String(productId));
+        }
+
+        if (foundProduct) {
+          setProduct(foundProduct);
         } else {
-          throw new Error(result.message || 'Malformed database query token exception.');
+          setError(`Product with ID "${productId}" could not be found in the database.`);
         }
       } catch (err) {
-        console.error("Database connection failure on look-up layer:", err);
-        setError(err.message);
+        console.error("Database connection failure:", err);
+        // Fallback to local storage on network exception
+        try {
+          const localProducts = JSON.parse(localStorage.getItem('eryx_products') || '[]');
+          const foundProduct = localProducts.find(p => String(p._id || p.id) === String(productId));
+          if (foundProduct) {
+            setProduct(foundProduct);
+          } else {
+            setError(err.message);
+          }
+        } catch (localErr) {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
@@ -53,7 +79,7 @@ function ProductDetail() {
     }
   }, [productId]);
 
-  // Layout Design Styles System (Preserved)
+  // Layout Design Styles System
   const pageContainer = { padding: '40px max(5%, 20px)', maxWidth: '1200px', margin: '0 auto', fontFamily: '"Inter", system-ui, sans-serif' };
   const backButton = { display: 'flex', alignItems: 'center', gap: '6px', border: 'none', backgroundColor: 'transparent', color: '#004B87', fontWeight: '600', fontSize: '14px', cursor: 'pointer', marginBottom: '30px', padding: 0 };
   const mainLayout = { display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '50px', alignItems: 'start' };
@@ -70,7 +96,6 @@ function ProductDetail() {
   const sideEffectsBox = { borderLeft: '4px solid #004B87', backgroundColor: '#F0F7FF', padding: '20px', borderRadius: '0 8px 8px 0', margin: '30px 0' };
   const inquiryButton = { backgroundColor: '#004B87', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '14px 28px', fontSize: '13px', fontWeight: '700', letterSpacing: '0.03em', display: 'inline-flex', alignItems: 'center', gap: '10px', cursor: 'pointer' };
 
-  // 🔁 Render State A: System Thread Initializing
   if (loading) {
     return (
       <div style={{ ...pageContainer, textAlign: 'center', padding: '100px 20px' }}>
@@ -80,29 +105,16 @@ function ProductDetail() {
     );
   }
 
-  // 🔁 Render State B: Network Connection Exceptions
-  if (error) {
+  if (error || !product) {
     return (
       <div style={{ ...pageContainer, textAlign: 'center', padding: '100px 20px' }}>
-        <h2 style={{ color: '#EF4444' }}>Runtime Link Failure</h2>
-        <p style={{ color: '#6B7280', marginBottom: '20px' }}>{error}</p>
-        <button onClick={() => navigate('/products')} style={inquiryButton}>Return to Workspace Catalog</button>
-      </div>
-    );
-  }
-
-  // 🔁 Render State C: Invalid Identifiers / No Record Match Found
-  if (!product) {
-    return (
-      <div style={{ ...pageContainer, textAlign: 'center', padding: '100px 20px' }}>
-        <h2 style={{ color: '#003561' }}>Formulation Not Found</h2>
-        <p style={{ color: '#6B7280', marginBottom: '20px' }}>Could not find details for ID: "{productId}"</p>
+        <h2 style={{ color: '#EF4444' }}>Formulation Record Not Found</h2>
+        <p style={{ color: '#6B7280', marginBottom: '20px' }}>{error || `Could not find details for ID: "${productId}"`}</p>
         <button onClick={() => navigate('/products')} style={inquiryButton}>Back to Products Catalog</button>
       </div>
     );
   }
 
-  // Resolve valid image source matching asset parameters
   const productImageSource = product.image_path || product.image;
   const hasValidImage = productImageSource && !productImageSource.includes('path-to-');
 
@@ -113,7 +125,6 @@ function ProductDetail() {
       </button>
 
       <div style={mainLayout}>
-        {/* Left Column: Image Area */}
         <div style={imageFrame}>
           {hasValidImage ? (
             <img 
@@ -129,13 +140,11 @@ function ProductDetail() {
           )}
         </div>
 
-        {/* Right Column: Information Details */}
         <div>
           <span style={categoryBadge}>{(product.category || product.type || 'General').toUpperCase()}</span>
           <h1 style={titleStyle}>{product.name}</h1>
           <p style={shortDescStyle}>{product.shortDescription || product.description}</p>
 
-          {/* Specifications Table */}
           <div style={specsCard}>
             <div style={specsHeader}>📋 FORMULATION SPECIFICATIONS</div>
             
@@ -148,7 +157,7 @@ function ProductDetail() {
             
             <div style={specRow}>
               <div style={specLabel}>👁️ Recommended Usage</div>
-              <div style={specValue}>{product.specifications?.usage || 'As directed by the Physician.'}</div>
+              <div style={specValue}>{product.specifications?.usage || product.usage || 'As directed by the Physician.'}</div>
             </div>
             
             <div style={specRow}>
@@ -157,7 +166,6 @@ function ProductDetail() {
             </div>
           </div>
 
-          {/* SAFE CHECK: Only renders the Key Benefits section if it exists in the data */}
           {product.benefits && Array.isArray(product.benefits) && product.benefits.length > 0 && (
             <div style={{ marginBottom: '30px' }}>
               <div style={sectionHeading}>🩺 Uses & Key Benefits</div>
@@ -172,7 +180,6 @@ function ProductDetail() {
             </div>
           )}
 
-          {/* SAFE CHECK: Only renders the Side Effects section if it exists in the data */}
           {product.sideEffects && (
             <div style={sideEffectsBox}>
               <div style={{ ...sectionHeading, color: '#004B87', fontSize: '14px', marginBottom: '8px' }}>
@@ -186,7 +193,7 @@ function ProductDetail() {
 
           <button 
             style={inquiryButton}
-            onClick={() => alert(`Inquiry initiated for ${product.name}.`)}
+            onClick={() => navigate('/contact', { state: { selectedProduct: product.name } })}
           >
             📬 SEND FORMULATION INQUIRY
           </button>

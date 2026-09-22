@@ -1,108 +1,97 @@
 <?php
-// 🌐 Network Gateway & Dynamic CORS Headers Configuration
-if (isset($_SERVER['HTTP_ORIGIN'])) {
-    $allowed_origin = $_SERVER['HTTP_ORIGIN'];
-    
-    // Safety verification: Ensures the origin is either localhost (any port) or your secure platform domain
-    if (preg_match('~^https?://localhost(:\d+)?$~', $allowed_origin) || strpos($allowed_origin, 'eryx-biotech') !== false) {
-        header("Access-Control-Allow-Origin: " . $allowed_origin);
-    }
-} else {
-    // Basic fallback if no explicit origin header is passed
+// backend/api/add_team.php
+
+require_once '../config/db.php';
+
+if (!headers_sent()) {
     header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Content-Type: application/json; charset=UTF-8");
 }
 
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-header("Access-Control-Allow-Credentials: true");
-
-// Handle preflight OPTIONS requests smoothly
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit(0);
 }
 
-// 🗄️ Database Connection Coordinates
-$host = "localhost";
-$db_name = "eryx_biotech_platform"; 
-$username = "root";
-$password = "";
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Method not allowed. Use POST."]);
+    exit();
+}
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$db_name", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-    // Only process POST requests
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        
-        // 1. Intercept raw JSON stream from React fetch/axios
-        $rawInput = file_get_contents("php://input");
-        $payload = json_decode($rawInput, true) ?? [];
+    $name       = trim($_POST['name'] ?? $input['name'] ?? '');
+    $role       = trim($_POST['role'] ?? $input['role'] ?? '');
+    $department = trim($_POST['department'] ?? $input['department'] ?? '');
+    $bio        = trim($_POST['bio'] ?? $input['bio'] ?? '');
+    $imageUrl   = trim($_POST['image_url'] ?? $input['image_url'] ?? '');
 
-        // 2. Fallback to standard $_POST if form data is sent instead of JSON data
-        $name = $payload['name'] ?? $_POST['name'] ?? null;
-        $role = $payload['role'] ?? $payload['roleDesignation'] ?? $_POST['role'] ?? null;
-        $department = $payload['department'] ?? $_POST['department'] ?? null;
-        $bio = $payload['bio'] ?? $payload['biography'] ?? $_POST['bio'] ?? '';
-        $image_url = $payload['image_url'] ?? $payload['avatar'] ?? $_POST['image_url'] ?? 'default-avatar.png';
-
-        // 3. Handle physical file upload if your uploader sends a real file binary
-        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $target_dir = "../../public/uploads/team/"; // Adjust path to match your project architecture
-            if (!is_dir($target_dir)) {
-                mkdir($target_dir, 0777, true);
-            }
-            $file_ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-            $file_name = uniqid() . '.' . $file_ext;
-            
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $target_dir . $file_name)) {
-                $image_url = "/uploads/team/" . $file_name;
-            }
-        }
-
-        // Enforce data validation requirements
-        if (!$name || !$role || !$department) {
-            http_response_code(400);
-            echo json_encode([
-                "status" => "error",
-                "message" => "Validation fault: Name, Role, and Department properties are mandatory."
-            ]);
-            exit();
-        }
-
-        // 4. SQL Write Execution
-        $query = "INSERT INTO team_members (name, role, department, image_url, bio) 
-                  VALUES (:name, :role, :department, :image_url, :bio)";
-        
-        $stmt = $conn->prepare($query);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':role', $role);
-        $stmt->bindParam(':department', $department);
-        $stmt->bindParam(':image_url', $image_url);
-        $stmt->bindParam(':bio', $bio);
-        
-        if ($stmt->execute()) {
-            echo json_encode([
-                "status" => "success",
-                "message" => "Profile successfully provisioned and committed to storage.",
-                "inserted_id" => $conn->lastInsertId()
-            ]);
-        } else {
-            throw new PDOException("Data engine failed to write the profile matrix row.");
-        }
+    if (empty($name)) {
+        http_response_code(400);
+        echo json_encode(["status" => "error", "message" => "Team member name is required."]);
         exit();
     }
 
-    // If someone tries GET on this file
-    http_response_code(405);
-    echo json_encode(["status" => "error", "message" => "Method Not Allowed on add_team execution path."]);
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/../../public/uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        $fileExtension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $fileName = 'team_' . time() . '_' . mt_rand(1000, 9999) . '.' . $fileExtension;
+        $uploadFile = $uploadDir . $fileName;
 
-} catch(PDOException $e) {
-    http_response_code(500);
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadFile)) {
+            $imageUrl = 'uploads/' . $fileName;
+        }
+    }
+
+    $insertedId = null;
+
+    if (isset($pdo) && $pdo instanceof PDO) {
+        $stmt = $pdo->prepare("INSERT INTO team_members (name, role, department, bio, image_url) VALUES (:name, :role, :department, :bio, :image_url)");
+        $stmt->execute([
+            ':name' => $name,
+            ':role' => $role,
+            ':department' => $department,
+            ':bio' => $bio,
+            ':image_url' => $imageUrl
+        ]);
+        $insertedId = $pdo->lastInsertId();
+    } elseif (isset($conn)) {
+        $stmt = $conn->prepare("INSERT INTO team_members (name, role, department, bio, image_url) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssss", $name, $role, $department, $bio, $imageUrl);
+        $stmt->execute();
+        $insertedId = $stmt->insert_id;
+        $stmt->close();
+        $conn->close();
+    } else {
+        throw new Exception("No valid database connection available.");
+    }
+
+    $formattedPath = (!empty($imageUrl) && strpos($imageUrl, 'http') !== 0) ? '/' . ltrim($imageUrl, '/') : $imageUrl;
+
+    http_response_code(201);
     echo json_encode([
-        "status" => "error",
-        "message" => "Database level fault on add_team script: " . $e->getMessage()
+        "status" => "success",
+        "message" => "Team member added successfully.",
+        "data" => [
+            "id" => $insertedId,
+            "name" => $name,
+            "role" => $role,
+            "department" => $department,
+            "bio" => $bio,
+            "image_url" => $formattedPath
+        ]
     ]);
+
+} catch (Throwable $e) {
+    error_log($e->getMessage());
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Internal Server Error"]);
 }
 ?>

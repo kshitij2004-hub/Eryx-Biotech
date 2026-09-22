@@ -1,48 +1,53 @@
 <?php
 // backend/api/get_adr_reports.php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET");
+
+require_once '../config/db.php';
+
+// Ensure response is always strict JSON
 header("Content-Type: application/json; charset=UTF-8");
 
-// Force PHP to show deep runtime errors instead of a silent white screen
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit(0);
+}
 
-$db_host = "localhost";
-$db_user = "root";
-$db_pass = "";
-$db_name = "eryx_biotech_platform";
-
-$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
-
-if ($conn->connect_error) {
-    echo json_encode(["status" => "error", "message" => "Database link failure: " . $conn->connect_error]);
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Method not allowed. Use GET."]);
     exit();
 }
 
-// Let's run a flexible select query to bypass missing timestamp column crashes
-$query = "SELECT * FROM adr_reports ORDER BY id DESC";
-$result = $conn->query($query);
-
-if ($result) {
+try {
     $reports = [];
-    while ($row = $result->fetch_assoc()) {
-        // Fallback safety if created_at column wasn't provisioned yet
-        if (!isset($row['created_at'])) {
-            $row['created_at'] = "System Token Sync Logged";
+
+    if (isset($pdo) && $pdo instanceof PDO) {
+        $stmt = $pdo->query("SELECT * FROM adr_reports ORDER BY id DESC");
+        $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        // MySQLi Fallback Execution
+        $sql = "SELECT * FROM adr_reports ORDER BY id DESC";
+        $result = $conn->query($sql);
+
+        if (!$result) {
+            throw new Exception("Query failed: " . $conn->error);
         }
-        $reports[] = $row;
+
+        $reports = $result->fetch_all(MYSQLI_ASSOC);
+        $result->free();
+        $conn->close();
     }
+
+    http_response_code(200);
     echo json_encode([
         "status" => "success",
-        "data" => $reports
+        "data"   => $reports
     ]);
-} else {
+
+} catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status" => "error", 
-        "message" => "SQL Execution Crash: " . $conn->error
+        "status" => "error",
+        "message" => $e->getMessage()
     ]);
 }
-
-$conn->close();
 ?>

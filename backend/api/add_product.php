@@ -1,80 +1,97 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Content-Type: application/json; charset=UTF-8");
+// backend/api/add_product.php
 
-// Instant mitigation layer for browser preflight validation queries
+require_once '../config/db.php';
+
+if (!headers_sent()) {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Content-Type: application/json; charset=UTF-8");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit(0);
 }
 
-// Pulls in your $pdo connection variable
-require_once '../config/db.php';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Method not allowed. Use POST."]);
+    exit();
+}
 
-// Since we are streaming live binary assets via FormData, read data directly out of $_POST arrays
-if (isset($_POST['name']) && isset($_POST['description'])) {
-    
-    // ⚠️ PDO prepared statements eliminate the need for mysqli_real_escape_string
-    $name        = $_POST['name'];
-    $formula     = $_POST['formula'] ?? '';
-    $category    = $_POST['category'] ?? '';
-    $type        = $_POST['type'] ?? '';        // ✅ FIXED: Now included in database write below
-    $description = $_POST['description'];
-    $is_featured = ($_POST['is_featured'] === 'true' || $_POST['is_featured'] == 1) ? 1 : 0;
-    
-    $image_path  = ''; // Fallback default state parameter allocation
+try {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-    // Process live file engine streaming allocations
+    $name        = trim($_POST['name'] ?? $input['name'] ?? '');
+    $description = trim($_POST['description'] ?? $input['description'] ?? '');
+    $category    = trim($_POST['category'] ?? $input['category'] ?? '');
+    $price       = trim($_POST['price'] ?? $input['price'] ?? '');
+    $imageUrl    = trim($_POST['image_path'] ?? $_POST['image_url'] ?? $input['image_path'] ?? $input['image_url'] ?? '');
+
+    if (empty($name)) {
+        http_response_code(400);
+        echo json_encode(["status" => "error", "message" => "Product name is required."]);
+        exit();
+    }
+
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES['image']['tmp_name'];
-        $fileName    = $_FILES['image']['name'];
-        
-        // Sanitize naming criteria signatures
-        $cleanFileName = time() . '_' . preg_replace("/[^a-zA-Z0-9.]/", "_", $fileName);
-        
-        // Define system paths target maps relative to server layout architectures
-        $uploadFolder = '../../public/uploads/';
-        
-        if (!is_dir($uploadFolder)) {
-            mkdir($uploadFolder, 0755, true);
+        $uploadDir = __DIR__ . '/../../public/uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
         }
-        
-        $targetFilePath = $uploadFolder . $cleanFileName;
-        
-        if (move_uploaded_file($fileTmpPath, $targetFilePath)) {
-            // Path saved inside database tracking points to public relative access targets
-            $image_path = '/uploads/' . $cleanFileName;
+        $fileExtension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $fileName = 'prod_' . time() . '_' . mt_rand(1000, 9999) . '.' . $fileExtension;
+        $uploadFile = $uploadDir . $fileName;
+
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadFile)) {
+            $imageUrl = 'uploads/' . $fileName;
         }
     }
 
-    try {
-        // 🛠️ PDO Parameterized Insert Sequence Routines
-        // Added 'type' column and parameters to match your React UI architecture
-        $query = "INSERT INTO products (name, formula, description, price, category, type, image_path, is_featured) 
-                  VALUES (:name, :formula, :description, :price, :category, :type, :image_path, :is_featured)";
-        
-        $stmt = $pdo->prepare($query);
-        
+    $insertedId = null;
+
+    if (isset($pdo) && $pdo instanceof PDO) {
+        $stmt = $pdo->prepare("INSERT INTO products (name, description, category, price, image_path) VALUES (:name, :description, :category, :price, :image_path)");
         $stmt->execute([
-            ':name'        => $name,
-            ':formula'     => $formula,
+            ':name' => $name,
             ':description' => $description,
-            ':price'       => null, // Set to NULL since we opened up the table structure earlier
-            ':category'    => $category,
-            ':type'        => $type,
-            ':image_path'  => $image_path,
-            ':is_featured' => $is_featured
+            ':category' => $category,
+            ':price' => $price,
+            ':image_path' => $imageUrl
         ]);
-
-        echo json_encode(["status" => "success", "message" => "Database node synchronized successfully."]);
-
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Database insertion execution fault: " . $e->getMessage()]);
+        $insertedId = $pdo->lastInsertId();
+    } elseif (isset($conn)) {
+        $stmt = $conn->prepare("INSERT INTO products (name, description, category, price, image_path) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssss", $name, $description, $category, $price, $imageUrl);
+        $stmt->execute();
+        $insertedId = $stmt->insert_id;
+        $stmt->close();
+        $conn->close();
+    } else {
+        throw new Exception("No valid database connection available.");
     }
-} else {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Invalid structural payload configuration references."]);
+
+    $formattedPath = (!empty($imageUrl) && strpos($imageUrl, 'http') !== 0) ? '/' . ltrim($imageUrl, '/') : $imageUrl;
+
+    http_response_code(201);
+    echo json_encode([
+        "status" => "success",
+        "message" => "Product created successfully.",
+        "data" => [
+            "id" => $insertedId,
+            "name" => $name,
+            "description" => $description,
+            "category" => $category,
+            "price" => $price,
+            "image_path" => $formattedPath
+        ]
+    ]);
+
+} catch (Throwable $e) {
+    error_log($e->getMessage());
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Internal Server Error"]);
 }
 ?>

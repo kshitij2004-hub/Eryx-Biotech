@@ -10,47 +10,47 @@ function Auth({ setUser, setCurrentPage }) {
     e.preventDefault();
 
     if (isSignUp) {
-      // Use the name they signed up with, or default to a clean fallback
+      // Sign Up: Anyone can register as a standard user
       setUser({ name: name || 'User', role: 'user' });
       setCurrentPage('safety');
     } else {
-      // 🕵️‍♂️ THE ADMIN OVERRIDE CHECK
+      // Sign In: Check for the secret Admin credentials first
       if (emailOrId === 'ERYX-ROOT-99' && password === 'admin123') {
         setUser({ name: 'Administrator', role: 'admin' });
-        setCurrentPage('dashboard');
+        setCurrentPage('dashboard'); // Takes them to the hidden admin panel
       } else {
-        // Standard User Login - Extracting a display name from the email handle for the UI
+        // Standard User Login: Accepts ANY other email/password combinations automatically
         const displayName = emailOrId.split('@')[0] || 'User';
         setUser({ name: displayName, role: 'user' });
-        setCurrentPage('safety');
+        setCurrentPage('safety'); // Takes them to the general safety page
       }
     }
   };
 
   return (
-    <div style={{ padding: '60px 0', maxWidth: '420px', margin: '0 auto' }}>
+    <div style={{ padding: '60px 0', maxWidth: '420px', margin: '0 auto', color: 'var(--text-primary)' }}>
       
       {/* Tab Switcher */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '40px', marginBottom: '40px', borderBottom: '1px solid rgba(161,161,181,0.1)', paddingBottom: '15px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '40px', marginBottom: '40px', borderBottom: '1px solid var(--border-color, rgba(161,161,181,0.15))', paddingBottom: '15px', transition: 'border-color 0.3s' }}>
         <button 
           type="button"
           onClick={() => setIsSignUp(false)} 
-          style={{ background: 'none', border: 'none', color: !isSignUp ? '#F5C518' : '#A1A1B5', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>
+          style={{ background: 'none', border: 'none', color: !isSignUp ? '#F5C518' : 'var(--text-secondary)', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>
           SIGN IN
         </button>
         <button 
           type="button"
           onClick={() => setIsSignUp(true)} 
-          style={{ background: 'none', border: 'none', color: isSignUp ? '#F5C518' : '#A1A1B5', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>
+          style={{ background: 'none', border: 'none', color: isSignUp ? '#F5C518' : 'var(--text-secondary)', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>
           CREATE ACCOUNT
         </button>
       </div>
 
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '28px', color: '#F3F4F6', margin: '0 0 8px 0', fontWeight: '600' }}>
+        <h2 style={{ fontSize: '28px', color: 'var(--text-primary)', margin: '0 0 8px 0', fontWeight: '600' }}>
           {isSignUp ? 'Create an Account' : 'Welcome Back'}
         </h2>
-        <p style={{ color: '#A1A1B5', fontSize: '14px', margin: 0 }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
           {isSignUp ? 'Sign up to submit and monitor safety reports.' : 'Please log in to access your dashboard.'}
         </p>
       </div>
@@ -63,18 +63,17 @@ function Auth({ setUser, setCurrentPage }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            style={{ padding: '14px', background: '#12121A', border: '1px solid rgba(161,161,181,0.2)', borderRadius: '4px', color: '#FFF', fontSize: '14px' }} 
+            style={{ padding: '14px', background: 'var(--bg-input)', border: '1px solid var(--border-color, rgba(161,161,181,0.2))', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '14px', transition: 'background 0.3s, border 0.3s' }} 
           />
         )}
 
-        {/* Consistently maps to Email Address for both Sign Up and Sign In */}
         <input 
           type="text" 
           placeholder="Email Address" 
           value={emailOrId}
           onChange={(e) => setEmailOrId(e.target.value)}
           required
-          style={{ padding: '14px', background: '#12121A', border: '1px solid rgba(161,161,181,0.2)', borderRadius: '4px', color: '#FFF', fontSize: '14px' }} 
+          style={{ padding: '14px', background: 'var(--bg-input)', border: '1px solid var(--border-color, rgba(161,161,181,0.2))', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '14px', transition: 'background 0.3s, border 0.3s' }} 
         />
         
         <input 
@@ -83,7 +82,7 @@ function Auth({ setUser, setCurrentPage }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ padding: '14px', background: '#12121A', border: '1px solid rgba(161,161,181,0.2)', borderRadius: '4px', color: '#FFF', fontSize: '14px' }} 
+          style={{ padding: '14px', background: 'var(--bg-input)', border: '1px solid var(--border-color, rgba(161,161,181,0.2))', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '14px', transition: 'background 0.3s, border 0.3s' }} 
         />
 
         <button 
@@ -93,11 +92,10 @@ function Auth({ setUser, setCurrentPage }) {
         </button>
       </form>
 
-      {/* 🛡️ SAFE ENVIRONMENT GUARD */}
-      {/* This block renders ONLY during local development and completely self-destructs in production builds */}
+      {/* Secret panel hint - only displays when running locally for your development convenience */}
       {!isSignUp && import.meta.env.DEV && (
-        <div style={{ marginTop: '25px', padding: '12px', borderRadius: '4px', background: 'rgba(245,197,24,0.05)', border: '1px solid rgba(245,197,24,0.15)', fontSize: '12px', color: '#A1A1B5', textAlign: 'center' }}>
-          💡 **Admin Demo Account:** Enter <span style={{ color: '#F5C518' }}>ERYX-ROOT-99</span> in the email field with password <span style={{ color: '#F5C518' }}>admin123</span> to open the admin panel.
+        <div style={{ marginTop: '25px', padding: '12px', borderRadius: '4px', background: 'var(--bg-card, rgba(245,197,24,0.05))', border: '1px solid rgba(245,197,24,0.15)', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', transition: 'background 0.3s' }}>
+          💡 **Admin Gateway:** Use <span style={{ color: '#F5C518' }}>ERYX-ROOT-99</span> / <span style={{ color: '#F5C518' }}>admin123</span> to bypass to the admin layout. Any other input logs in as a normal user.
         </div>
       )}
     </div>

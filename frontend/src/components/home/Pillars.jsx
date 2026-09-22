@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 
-function Pillars() {
+function Pillars({ darkMode = true, currentTheme }) {
+  // Fallback theme object in case it is rendered independently
+  const theme = currentTheme || {
+    textMain: darkMode ? '#F3F4F6' : '#1F2937',
+    textMuted: darkMode ? '#8E8E9F' : '#4B5563',
+    cardBg: darkMode ? '#111116' : '#FFFFFF',
+    cardAltBg: darkMode ? '#16161D' : '#F9FAFB',
+    cardBorder: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
+    accentPurple: '#5B3FFF',
+  };
+
   const pillarData = [
     {
       id: '01',
@@ -63,35 +73,37 @@ function Pillars() {
         <span style={{
           fontSize: '11px',
           fontWeight: '700',
-          color: '#5B3FFF',
-          backgroundColor: 'rgba(91, 63, 255, 0.08)',
+          color: theme.accentPurple,
+          backgroundColor: darkMode ? 'rgba(91, 63, 255, 0.08)' : 'rgba(91, 63, 255, 0.08)',
           letterSpacing: '2px',
           textTransform: 'uppercase',
           padding: '6px 16px',
           borderRadius: '20px',
-          border: '1px solid rgba(91, 63, 255, 0.15)'
+          border: `1px solid ${theme.accentPurple}26`
         }}>
           Our Pillars
         </span>
       </div>
 
-      {/* 🎯 MAIN HEADERS */}
+      {/* 🎯 MAIN HEADERS (Dynamically switches text color based on theme) */}
       <h2 style={{
         fontSize: '34px',
         fontWeight: '700',
-        color: '#F3F4F6',
+        color: theme.textMain,
         margin: '0 0 14px 0',
-        letterSpacing: '0.5px'
+        letterSpacing: '0.5px',
+        transition: 'color 0.3s ease'
       }}>
         Why Choose Eryx Pharma?
       </h2>
       
       <p style={{
         fontSize: '15px',
-        color: '#8E8E9F',
+        color: theme.textMuted,
         maxWidth: '650px',
         margin: '0 auto 60px auto',
-        lineHeight: '1.6'
+        lineHeight: '1.6',
+        transition: 'color 0.3s ease'
       }}>
         Our commitment to clinical excellence makes us a preferred choice for healthcare professionals globally.
       </p>
@@ -114,17 +126,17 @@ function Pillars() {
               onMouseLeave={() => setHoveredIndex(null)}
               style={{
                 position: 'relative',
-                background: '#111116',
+                background: theme.cardBg,
                 border: '1px solid',
-                borderColor: isCurrentHovered ? '#5B3FFF' : 'rgba(255, 255, 255, 0.05)',
+                borderColor: isCurrentHovered ? theme.accentPurple : theme.cardBorder,
                 borderRadius: '12px',
                 padding: '40px 30px',
                 textAlign: 'left',
                 transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
                 transform: isCurrentHovered ? 'translateY(-6px)' : 'none',
                 boxShadow: isCurrentHovered 
-                  ? '0 12px 30px rgba(91, 63, 255, 0.15)' 
-                  : '0 4px 20px rgba(0, 0, 0, 0.2)',
+                  ? (darkMode ? '0 12px 30px rgba(91, 63, 255, 0.15)' : '0 12px 30px rgba(91, 63, 255, 0.1)') 
+                  : (darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.04)'),
                 overflow: 'hidden'
               }}
             >
@@ -135,7 +147,7 @@ function Pillars() {
                 left: 0,
                 right: 0,
                 height: '3px',
-                backgroundColor: '#5B3FFF',
+                backgroundColor: theme.accentPurple,
                 opacity: isCurrentHovered ? 1 : 0,
                 transition: 'opacity 0.3s ease'
               }} />
@@ -145,7 +157,7 @@ function Pillars() {
                 fontSize: '11px',
                 fontFamily: 'monospace',
                 fontWeight: '700',
-                color: isCurrentHovered ? '#5B3FFF' : '#6B6B7C',
+                color: isCurrentHovered ? theme.accentPurple : theme.textMuted,
                 letterSpacing: '1px',
                 marginBottom: '24px',
                 transition: 'color 0.3s ease'
@@ -158,13 +170,13 @@ function Pillars() {
                 width: '48px',
                 height: '48px',
                 borderRadius: '50%',
-                backgroundColor: isCurrentHovered ? 'rgba(91, 63, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                backgroundColor: isCurrentHovered ? 'rgba(91, 63, 255, 0.1)' : (darkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)'),
                 border: '1px solid',
-                borderColor: isCurrentHovered ? 'rgba(91, 63, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                borderColor: isCurrentHovered ? 'rgba(91, 63, 255, 0.2)' : theme.cardBorder,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: isCurrentHovered ? '#5B3FFF' : '#A1A1B5',
+                color: isCurrentHovered ? theme.accentPurple : theme.textMuted,
                 marginBottom: '24px',
                 transition: 'all 0.3s ease'
               }}>
@@ -175,9 +187,10 @@ function Pillars() {
               <h3 style={{
                 fontSize: '19px',
                 fontWeight: '600',
-                color: '#FFFFFF',
+                color: theme.textMain,
                 margin: '0 0 12px 0',
-                letterSpacing: '0.3px'
+                letterSpacing: '0.3px',
+                transition: 'color 0.3s ease'
               }}>
                 {pillar.title}
               </h3>
@@ -185,9 +198,10 @@ function Pillars() {
               {/* PILLAR DESCRIPTION */}
               <p style={{
                 fontSize: '13.5px',
-                color: '#8E8E9F',
+                color: theme.textMuted,
                 lineHeight: '1.6',
-                margin: 0
+                margin: 0,
+                transition: 'color 0.3s ease'
               }}>
                 {pillar.description}
               </p>

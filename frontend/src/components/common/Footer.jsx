@@ -1,15 +1,28 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // 1. Added Link import
+import { Link } from 'react-router-dom';
 
-function Footer({ handleNavigation }) {
+function Footer({ handleNavigation, darkMode = true }) {
+  // 🎨 Dynamic Theme Colors matching global portal design
+  const currentTheme = {
+    textMain: darkMode ? '#FFFFFF' : '#1F2937',
+    textMuted: darkMode ? '#A1A1B5' : '#4B5563',
+    textSubtle: darkMode ? '#8E8E9F' : '#6B7280',
+    labelColor: darkMode ? '#F3F4F6' : '#111827',
+    valueColor: darkMode ? '#E4E4E7' : '#374151',
+    borderLight: darkMode ? 'rgba(161, 161, 181, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+    borderFaint: darkMode ? 'rgba(161, 161, 181, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+    footerBg: 'transparent'
+  };
+
   const footerStyle = {
-    backgroundColor: 'transparent',
-    color: '#A1A1B5',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    padding: '80px 20px 30px 20px',
-    borderTop: '1px solid rgba(161, 161, 181, 0.08)',
+    backgroundColor: currentTheme.footerBg,
+    color: currentTheme.textMuted,
+    fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
+    padding: '80px max(4%, 20px) 30px max(4%, 20px)',
+    borderTop: `1px solid ${currentTheme.borderLight}`,
     fontSize: '14px',
-    lineHeight: '1.6'
+    lineHeight: '1.6',
+    transition: 'background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease'
   };
 
   const containerStyle = {
@@ -33,14 +46,15 @@ function Footer({ handleNavigation }) {
   };
 
   const headingStyle = {
-    color: '#FFFFFF',
+    color: currentTheme.textMain,
     fontSize: '12px',
     fontWeight: '700',
     letterSpacing: '1.5px',
     textTransform: 'uppercase',
     marginBottom: '25px',
-    borderBottom: '1px solid rgba(161, 161, 181, 0.08)',
-    paddingBottom: '10px'
+    borderBottom: `1px solid ${currentTheme.borderLight}`,
+    paddingBottom: '10px',
+    transition: 'color 0.3s ease, border-color 0.3s ease'
   };
 
   const listStyle = {
@@ -53,7 +67,7 @@ function Footer({ handleNavigation }) {
   };
 
   const linkStyle = {
-    color: '#A1A1B5',
+    color: currentTheme.textMuted,
     textDecoration: 'none',
     cursor: 'pointer',
     transition: 'color 0.2s ease',
@@ -70,22 +84,15 @@ function Footer({ handleNavigation }) {
   };
 
   const contactLabelStyle = {
-    color: '#F3F4F6',
+    color: currentTheme.labelColor,
     fontWeight: '600',
     fontSize: '12px',
-    letterSpacing: '0.3px'
+    letterSpacing: '0.3px',
+    transition: 'color 0.3s ease'
   };
-
-
 
   const handleLinkHover = (e, color) => {
     e.target.style.color = color;
-  };
-
-  const handleIconHover = (e, isEnter) => {
-    e.currentTarget.style.backgroundColor = isEnter ? 'rgba(91, 63, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)';
-    e.currentTarget.style.borderColor = isEnter ? '#5B3FFF' : 'rgba(255, 255, 255, 0.05)';
-    e.currentTarget.style.color = isEnter ? '#FFFFFF' : '#A1A1B5';
   };
 
   return (
@@ -103,7 +110,7 @@ function Footer({ handleNavigation }) {
               />
             </Link>
           </div>
-          <p style={{ fontSize: '13px', color: '#8E8E9F', paddingRight: '20px', lineHeight: '1.6', margin: 0 }}>
+          <p style={{ fontSize: '13px', color: currentTheme.textSubtle, paddingRight: '20px', lineHeight: '1.6', margin: 0, transition: 'color 0.3s ease' }}>
             Innovating healthcare through research-driven pharmaceutical solutions. 
             Committed to quality, trust, and global health standards.
           </p>
@@ -113,11 +120,11 @@ function Footer({ handleNavigation }) {
         <div style={columnStyle}>
           <h4 style={headingStyle}>Quick Links</h4>
           <ul style={listStyle}>
-            <li><Link to="/" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Home</Link></li>
-            <li><Link to="/about" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>About Us</Link></li>
-            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>All Products</Link></li>
-            <li><Link to="/about" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Our Directors</Link></li>
-            <li><Link to="/contact" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Contact Us</Link></li>
+            <li><Link to="/" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Home</Link></li>
+            <li><Link to="/about" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>About Us</Link></li>
+            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>All Products</Link></li>
+            <li><Link to="/about" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Our Directors</Link></li>
+            <li><Link to="/contact" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Contact Us</Link></li>
           </ul>
         </div>
 
@@ -125,11 +132,11 @@ function Footer({ handleNavigation }) {
         <div style={columnStyle}>
           <h4 style={headingStyle}>Product Categories</h4>
           <ul style={listStyle}>
-            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Tablets</Link></li>
-            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Capsules</Link></li>
-            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Syrups</Link></li>
-            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Injections</Link></li>
-            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#FFFFFF')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Supplements</Link></li>
+            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Tablets</Link></li>
+            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Capsules</Link></li>
+            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Syrups</Link></li>
+            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Injections</Link></li>
+            <li><Link to="/products" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Supplements</Link></li>
           </ul>
         </div>
 
@@ -139,53 +146,53 @@ function Footer({ handleNavigation }) {
           
           <div style={contactItemStyle}>
             <span style={contactLabelStyle}>📍 Head Office:</span>
-            <span style={{ color: '#E4E4E7' }}>Corporate Office: A/6-202, AMBERNATH(W), MIDC, THANE, MAHARASHTRA- 421505</span>
+            <span style={{ color: currentTheme.valueColor, transition: 'color 0.3s ease' }}>Corporate Office: A/6-202, AMBERNATH(W), MIDC, THANE, MAHARASHTRA- 421505</span>
           </div>
 
-          <div style={{ display: 'flex', gap: '30px' }}>
+          <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
             <div style={contactItemStyle}>
               <span style={contactLabelStyle}>📞 Phone:</span>
-              <span style={{ color: '#E4E4E7' }}>+91-91365-06985</span>
+              <span style={{ color: currentTheme.valueColor, transition: 'color 0.3s ease' }}>+91-91365-06985</span>
             </div>
             <div style={contactItemStyle}>
               <span style={contactLabelStyle}>💬 WhatsApp:</span>
-              <span style={{ color: '#E4E4E7' }}>+91-91365-06985</span>
+              <span style={{ color: currentTheme.valueColor, transition: 'color 0.3s ease' }}>+91-91365-06985</span>
             </div>
           </div>
 
           <div style={contactItemStyle}>
             <span style={contactLabelStyle}>✉️ Email:</span>
-            <span style={{ color: '#F5C518', fontWeight: '500' }}>eryxhealthcare@gmail.com</span>
+            <span style={{ color: darkMode ? '#F5C518' : '#D97706', fontWeight: '500', transition: 'color 0.3s ease' }}>eryxhealthcare@gmail.com</span>
           </div>
 
           <div style={contactItemStyle}>
             <span style={contactLabelStyle}>🔑 CIN:</span>
-            <span style={{ fontFamily: 'monospace', letterSpacing: '0.5px', color: '#E4E4E7' }}>U24100MH2018PTC317668</span>
+            <span style={{ fontFamily: 'monospace', letterSpacing: '0.5px', color: currentTheme.valueColor, transition: 'color 0.3s ease' }}>U24100MH2018PTC317668</span>
           </div>
 
           <div style={contactItemStyle}>
             <span style={contactLabelStyle}>🏢 Branch Office / Warehouse:</span>
-            <span style={{ color: '#E4E4E7' }}>Central Depot/ Warehouse: Village- Chaturpur Ichhuri, P.O. - Kurebhar, Ayodhya- Sultanpur Road, Dist- Sultanpur, 228151</span>
+            <span style={{ color: currentTheme.valueColor, transition: 'color 0.3s ease' }}>Central Depot/ Warehouse: Village- Chaturpur Ichhuri, P.O. - Kurebhar, Ayodhya- Sultanpur Road, Dist- Sultanpur, 228151</span>
           </div>
         </div>
 
       </div>
 
-      <hr style={{ border: 'none', borderTop: '1px solid rgba(161, 161, 181, 0.06)', margin: '30px 0 25px 0' }} />
+      <hr style={{ border: 'none', borderTop: `1px solid ${currentTheme.borderFaint}`, margin: '30px 0 25px 0', transition: 'border-color 0.3s ease' }} />
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px', fontSize: '12px', color: '#6B6B7C' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px', fontSize: '12px', color: currentTheme.textSubtle, transition: 'color 0.3s ease' }}>
         <div>
           &copy; 2026 Eryx Pharmaceuticals. All Rights Reserved.
         </div>
         
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
-          <Link to="/privacy" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#F3F4F6')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Privacy Policy</Link> | 
-          <Link to="/terms" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#F3F4F6')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Terms & Conditions</Link> | 
-          <Link to="/refunds" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#F3F4F6')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Refund & Cancellation Terms</Link> | 
-          <Link to="/payment" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#F3F4F6')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Payment Terms</Link> | 
-          <Link to="/order-terms" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#F3F4F6')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Order Terms</Link> | 
-          <Link to="/sitemap" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#F3F4F6')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>Sitemap</Link> | 
-          <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, '#F3F4F6')} onMouseLeave={(e) => handleLinkHover(e, '#A1A1B5')}>XML Sitemap</a>
+          <Link to="/privacy" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Privacy Policy</Link> | 
+          <Link to="/terms" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Terms & Conditions</Link> | 
+          <Link to="/refunds" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Refund & Cancellation Terms</Link> | 
+          <Link to="/payment" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Payment Terms</Link> | 
+          <Link to="/order-terms" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Order Terms</Link> | 
+          <Link to="/sitemap" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>Sitemap</Link> | 
+          <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={(e) => handleLinkHover(e, currentTheme.textMain)} onMouseLeave={(e) => handleLinkHover(e, currentTheme.textMuted)}>XML Sitemap</a>
         </div>
       </div>
     </footer>

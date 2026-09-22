@@ -1,51 +1,66 @@
 <?php
-// 🌐 Network Gateway & Dynamic CORS Headers Configuration
-if (isset($_SERVER['HTTP_ORIGIN'])) {
-    $allowed_origin = $_SERVER['HTTP_ORIGIN'];
-    
-    // Safety verification: Ensures the origin is either localhost (any port) or your secure platform domain
-    if (preg_match('~^https?://localhost(:\d+)?$~', $allowed_origin) || strpos($allowed_origin, 'eryx-biotech') !== false) {
-        header("Access-Control-Allow-Origin: " . $allowed_origin);
-    }
-} else {
-    // Basic fallback if no explicit origin header is passed
+// backend/api/team.php - Output Team Member Profile Data
+
+require_once '../config/db.php';
+
+if (!headers_sent()) {
     header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Content-Type: application/json; charset=UTF-8");
 }
 
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-header("Access-Control-Allow-Credentials: true");
-
-// Handle preflight OPTIONS requests smoothly
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit(0);
 }
 
-$host = "localhost";
-$db_name = "eryx_biotech_platform"; 
-$username = "root";
-$password = "";
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Method not allowed. Use GET."]);
+    exit();
+}
+
+function normalizeImageUrl(?string $url): string {
+    if (empty($url)) return '';
+    if (strpos($url, 'http') === 0) return $url;
+    return '/' . ltrim($url, '/');
+}
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$db_name", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $team = [];
 
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $query = "SELECT id, name, role, department, image_url, bio FROM team_members ORDER BY id ASC";
-        $stmt = $conn->prepare($query);
-        $stmt->execute();
-        
-        echo json_encode([
-            "status" => "success",
-            "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
-        ]);
-        exit();
+    if (isset($pdo) && $pdo instanceof PDO) {
+        $stmt = $pdo->query("SELECT id, name, role, department, image_url, bio, created_at FROM team_members ORDER BY id DESC");
+        $team = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($team as &$row) {
+            $row['image_url'] = normalizeImageUrl($row['image_url'] ?? null);
+        }
+        unset($row);
+    } elseif (isset($conn)) {
+        $result = $conn->query("SELECT id, name, role, department, image_url, bio, created_at FROM team_members ORDER BY id DESC");
+        if (!$result) throw new Exception("Query failed: " . $conn->error);
+
+        while ($row = $result->fetch_assoc()) {
+            $row['image_url'] = normalizeImageUrl($row['image_url'] ?? null);
+            $team[] = $row;
+        }
+        $result->free();
+        $conn->close();
+    } else {
+        throw new Exception("No valid database connection available.");
     }
 
-} catch(PDOException $e) {
+    http_response_code(200);
+    echo json_encode([
+        "status" => "success",
+        "data"   => $team
+    ]);
+
+} catch (Throwable $e) {
+    error_log($e->getMessage());
     http_response_code(500);
-    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+    echo json_encode(["status" => "error", "message" => "Internal Server Error"]);
 }
 ?>

@@ -1,28 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function Products() {
+// 🌐 Centralized Environment Network Routing Matrix (Stable Outside Component)
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const BASE_URL = isLocalhost ? 'http://localhost/eryx-biotech-platform' : `${window.location.protocol}//${window.location.hostname}`;
+const API_URL = `${BASE_URL}/backend/api`;
+const ASSET_URL = `${BASE_URL}/public`;
+
+function Products({ darkMode = true }) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   
-  // 🔄 Two-tier Layered Filtering State
+  // 🔄 Two-tier Layered Filtering & Sorting State
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
   const [selectedType, setSelectedType] = useState('All Types');
   const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('Default Order');
 
   // 📦 State to safely house our synced records from the PHP Backend
   const [dynamicProductsList, setDynamicProductsList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🌐 Define your XAMPP server origin base path to anchor image streams perfectly
-  const BACKEND_BASE_URL = 'http://localhost/eryx-biotech-platform';
+  // 🎨 Dynamic Theme Colors
+  const currentTheme = {
+    wrapperBg: darkMode ? '#08080A' : '#FFFFFF',
+    textMain: darkMode ? '#FFFFFF' : '#1F2937',
+    textMuted: darkMode ? '#A1A1B5' : '#4B5563',
+    cardBg: darkMode ? 'rgba(19, 19, 26, 0.65)' : '#F9FAFB',
+    cardBorder: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+    inputBg: darkMode ? '#121216' : '#FFFFFF',
+    inputBorder: darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+    accentPurple: '#5B3FFF',
+    accentYellow: '#F5C518'
+  };
 
-  // 🚀 LIVE PHP BACKEND FETCH ENGINE
+  // 🚀 LIVE PHP BACKEND FETCH ENGINE WITH CONTENT-TYPE VALIDATION
   useEffect(() => {
-    fetch(`${BACKEND_BASE_URL}/backend/api/products.php`)
-      .then((response) => response.json())
+    fetch(`${API_URL}/get_products.php`)
+      .then(async (response) => {
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const textBody = await response.text();
+          throw new Error(`Server returned non-JSON response (${response.status}): ${textBody.substring(0, 100)}...`);
+        }
+        return response.json();
+      })
       .then((result) => {
-        // Defensive Check: Handle both wrapped response objects and raw flat arrays cleanly
         let rawData = [];
         if (result && result.status === 'success' && Array.isArray(result.data)) {
           rawData = result.data;
@@ -30,126 +53,125 @@ function Products() {
           rawData = result;
         }
 
-        // Map MySQL column names seamlessly to your existing UI properties
-        const mappedProducts = rawData.map((item) => ({
-          id: item.id,
-          name: item.name || 'Unnamed Formulation',
-          shortDescription: item.description || 'No composition details provided.', 
-          price: item.price,
-          category: item.category || 'General Medicine',
-          department: item.category || 'General Medicine', 
-          type: item.type || 'Tablets',                    
-          image: item.image_path || '',                    
-          isFeatured: parseInt(item.is_featured) === 1    
-        }));
+        const mappedProducts = rawData.map((item) => {
+          let rawImg = item.image_url || item.image_path || item.image || '';
+          return {
+            id: item.id,
+            name: item.name || 'Unnamed Formulation',
+            shortDescription: item.description || 'No composition details provided.', 
+            price: item.price,
+            category: item.category || 'General Medicine',
+            department: item.category || 'General Medicine', 
+            type: item.type || 'Tablets',          
+            image: rawImg,                     
+            isFeatured: parseInt(item.is_featured) === 1 || item.is_featured === true
+          };
+        });
         
         setDynamicProductsList(mappedProducts);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching data from PHP API:', error);
+        console.warn('Error fetching data from PHP API, deploying system fallbacks:', error);
+        const systemFallbackProducts = [
+          {
+            id: 'fb-p1',
+            name: 'Eryxovit Softgels',
+            shortDescription: 'Advanced multivitamin and mineral therapeutic formulation engineered for baseline metabolic reinforcement.',
+            category: 'General Medicine',
+            department: 'General Medicine',
+            type: 'Capsules',
+            image: '',
+            isFeatured: true
+          },
+          {
+            id: 'fb-p2',
+            name: 'Ophthacare Sterile Drop Solution',
+            shortDescription: 'Premium ophthalmic lubrication vector optimized for environmental micro-particle defense filters.',
+            category: 'Ophthalmic',
+            department: 'Ophthalmic',
+            type: 'Drops',
+            image: '',
+            isFeatured: false
+          }
+        ];
+        setDynamicProductsList(systemFallbackProducts);
         setLoading(false);
       });
   }, []);
 
-  // Deep UI/UX Layout System matching mockups
-  const pageContainer = { padding: '40px max(5%, 20px)', maxWidth: '1400px', margin: '0 auto', fontFamily: '"Inter", system-ui, sans-serif', backgroundColor: 'transparent', color: '#F3F4F6' };
-  const headerSection = { marginBottom: '30px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '25px' };
+  // Layout styles
+  const pageContainer = { 
+    padding: '120px max(4%, 20px) 60px max(4%, 20px)', 
+    maxWidth: '1400px', 
+    margin: '0 auto', 
+    fontFamily: '"Inter", system-ui, sans-serif', 
+    backgroundColor: currentTheme.wrapperBg, 
+    color: currentTheme.textMain, 
+    minHeight: '85vh', 
+    transition: 'background-color 0.3s ease, color 0.3s ease',
+    boxSizing: 'border-box'
+  };
+  
+  const headerSection = { marginBottom: '25px', borderBottom: `1px solid ${currentTheme.cardBorder}`, paddingBottom: '20px' };
   const badgeStyle = { display: 'inline-block', background: 'rgba(91, 63, 255, 0.12)', color: '#5B3FFF', fontWeight: '700', fontSize: '11px', padding: '4px 12px', borderRadius: '50px', letterSpacing: '0.05em', marginBottom: '12px' };
-  const titleStyle = { color: '#FFFFFF', fontSize: '32px', fontWeight: '700', margin: '0 0 8px 0' };
-  const subtitleStyle = { color: '#A1A1B5', fontSize: '15px', margin: 0 };
+  const titleStyle = { color: currentTheme.textMain, fontSize: '38px', fontFamily: '"Playfair Display", Georgia, serif', fontWeight: '600', margin: '0 0 8px 0', letterSpacing: '0.5px' };
+  const subtitleStyle = { color: currentTheme.textMuted, fontSize: '15px', margin: 0 };
   
-  const contentLayout = { display: 'flex', gap: '35px', alignItems: 'flex-start' };
-  
-  // Sidebar Styling - Frosted Dark Glass Surface
-  const sidebarCard = { width: '280px', flexShrink: 0, border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', padding: '24px', backgroundColor: 'rgba(19, 19, 26, 0.65)', backdropFilter: 'blur(10px)', boxShadow: 'none' };
-  const filterHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' };
-  const sidebarSectionTitle = { fontSize: '11px', fontWeight: '700', color: '#8E8E9F', letterSpacing: '0.06em', margin: '22px 0 10px 0', textTransform: 'uppercase' };
+  const horizontalFilterCard = { 
+    width: '100%', 
+    border: `1px solid ${currentTheme.cardBorder}`, 
+    borderRadius: '12px', 
+    padding: '20px 24px', 
+    backgroundColor: currentTheme.cardBg, 
+    backdropFilter: 'blur(10px)', 
+    boxSizing: 'border-box',
+    marginBottom: '25px'
+  };
+
+  const filterHeaderRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: `1px solid ${currentTheme.cardBorder}`, paddingBottom: '10px' };
+  const filterControlsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', alignItems: 'center' };
+  const filterGroupStyle = { display: 'flex', flexDirection: 'column', gap: '6px' };
+  const filterLabelStyle = { fontSize: '11px', fontWeight: '700', color: currentTheme.textMuted, letterSpacing: '0.06em', textTransform: 'uppercase' };
   const searchInputWrapper = { position: 'relative', display: 'flex', alignItems: 'center' };
-  const searchInput = { width: '100%', padding: '10px 35px 10px 12px', backgroundColor: '#08080A', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '6px', fontSize: '14px', color: '#FFFFFF', outline: 'none', transition: 'all 0.2s' };
+  const searchInput = { width: '100%', padding: '9px 35px 9px 12px', backgroundColor: currentTheme.inputBg, border: `1px solid ${currentTheme.inputBorder}`, borderRadius: '6px', fontSize: '13.5px', color: currentTheme.textMain, outline: 'none', boxSizing: 'border-box' };
+  const selectDropdownStyle = { width: '100%', padding: '9px 12px', backgroundColor: currentTheme.inputBg, border: `1px solid ${currentTheme.inputBorder}`, borderRadius: '6px', fontSize: '13.5px', color: currentTheme.textMain, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' };
+  const topActionBar = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px', fontSize: '14px', color: currentTheme.textMuted };
+  const productGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '25px', width: '100%' };
   
-  // Dynamic styling for Layer 1: Departments
-  const departmentItemStyle = (isActive) => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '9px 10px',
-    borderRadius: '6px',
-    backgroundColor: isActive ? 'rgba(91, 63, 255, 0.12)' : 'transparent',
-    color: isActive ? '#FFFFFF' : '#A1A1B5',
-    fontWeight: isActive ? '700' : '500',
-    fontSize: '14px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    marginBottom: '4px'
-  });
-
-  // Dynamic styling for Layer 2: Nested Types
-  const typeItemStyle = (isActive) => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '7px 10px 7px 24px', 
-    borderRadius: '4px',
-    backgroundColor: isActive ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-    color: isActive ? '#5B3FFF' : '#8E8E9F',
-    fontWeight: isActive ? '600' : '400',
-    fontSize: '13px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    marginBottom: '2px'
-  });
-
-  // Grid Layout
-  const mainContentArea = { flexGrow: 1 };
-  const topActionBar = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', fontSize: '14px', color: '#A1A1B5' };
-  const productGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '25px' };
+  const cardStyle = { 
+    border: `1px solid ${currentTheme.cardBorder}`, 
+    borderRadius: '12px', 
+    padding: '20px', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    backgroundColor: currentTheme.cardBg, 
+    backdropFilter: 'blur(8px)', 
+    transition: 'all 0.2s ease-in-out', 
+    cursor: 'pointer', 
+    boxSizing: 'border-box' 
+  };
   
-  // Card Details
-  const cardStyle = { border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', padding: '20px', display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(19, 19, 26, 0.65)', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease-in-out', cursor: 'pointer' };
-  const cardBadgeContainer = { display: 'flex', gap: '8px', marginBottom: '15px' };
-  const cardFeaturedBadge = { background: '#ccc200', color: '#080000', padding: '3px 8px', fontSize: '11px', fontWeight: '700', borderRadius: '4px' };
-  const cardCategoryBadge = { border: '1px solid rgba(255, 255, 255, 0.15)', color: '#A1A1B5', backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '2px 8px', fontSize: '11px', fontWeight: '600', borderRadius: '12px' };
+  const cardBadgeContainer = { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '15px' };
+  const cardFeaturedBadge = { background: '#F5C518', color: '#08080A', padding: '3px 8px', fontSize: '11px', fontWeight: '700', borderRadius: '4px' };
+  const cardCategoryBadge = { border: `1px solid ${currentTheme.inputBorder}`, color: currentTheme.textMuted, backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)', padding: '2px 8px', fontSize: '11px', fontWeight: '600', borderRadius: '12px' };
+  const imageContainer = { height: '180px', backgroundColor: darkMode ? '#121216' : '#F3F4F6', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px', padding: '10px', overflow: 'hidden', border: `1px solid ${currentTheme.cardBorder}` };
+  const productTitle = { color: currentTheme.textMain, fontSize: '18px', fontWeight: '700', margin: '0 0 10px 0', letterSpacing: '0.02em' };
   
-  const imageContainer = { height: '180px', backgroundColor: '#FFFFFF', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px', padding: '10px', overflow: 'hidden' };
-  const productTitle = { color: '#FFFFFF', fontSize: '18px', fontWeight: '700', margin: '0 0 10px 0', letterSpacing: '0.02em' };
-  
-  // ✨ FIX 1: Updated with Line Clamp Constraints
   const productDesc = { 
-    fontSize: '13.5px', 
-    color: '#A1A1B5', 
-    lineHeight: '1.5', 
-    flexGrow: 1, 
-    margin: 0,
-    display: '-webkit-box',
-    WebkitLineClamp: 3,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
+    fontSize: '13.5px', color: currentTheme.textMuted, lineHeight: '1.5', flexGrow: 1, margin: 0,
+    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis'
   };
   
   const actionButtonStyle = { 
-    marginTop: '20px', 
-    padding: '12px', 
-    border: '1px solid rgba(255, 255, 255, 0.15)', 
-    backgroundColor: 'transparent', 
-    color: '#FFFFFF', 
-    cursor: 'pointer', 
-    borderRadius: '6px', 
-    fontWeight: '700', 
-    fontSize: '12px',
-    letterSpacing: '0.03em',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    transition: 'all 0.2s ease'
+    marginTop: '20px', padding: '12px', border: `1px solid ${currentTheme.inputBorder}`, backgroundColor: 'transparent', 
+    color: currentTheme.textMain, cursor: 'pointer', borderRadius: '6px', fontWeight: '700', fontSize: '12px',
+    letterSpacing: '0.03em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s ease'
   };
 
-  // 🧬 Advanced Two-Tier Hierarchical Matrix Filtering Logic
+  // Filter and Sort Pipeline
   const filteredProducts = dynamicProductsList.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const productDept = (product.department || product.category || '').toLowerCase().trim();
     const productType = (product.type || '').toLowerCase().trim();
 
@@ -158,6 +180,11 @@ function Products() {
     const matchesFeatured = !featuredOnly || product.isFeatured;
 
     return matchesSearch && matchesDepartment && matchesType && matchesFeatured;
+  }).sort((a, b) => {
+    if (sortBy === 'Name (A-Z)') return a.name.localeCompare(b.name);
+    if (sortBy === 'Name (Z-A)') return b.name.localeCompare(a.name);
+    if (sortBy === 'Featured First') return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
+    return 0; // Default Order
   });
 
   const resetFilters = () => {
@@ -165,103 +192,128 @@ function Products() {
     setSelectedDepartment('All Departments');
     setSelectedType('All Types');
     setFeaturedOnly(false);
+    setSortBy('Default Order');
   };
 
   return (
     <div style={pageContainer}>
-      {/* Dynamic Upper Layout Header */}
       <header style={headerSection}>
         <span style={badgeStyle}>ERYX FORMULATIONS</span>
         <h1 style={titleStyle}>Pharmaceutical Products Catalog</h1>
         <p style={subtitleStyle}>Browse and search through our dynamic clinical and therapeutic catalog.</p>
       </header>
 
-      <div style={contentLayout}>
-        {/* Left Sidebar Layout */}
-        <aside style={sidebarCard}>
-          <div style={filterHeader}>
-            <span style={{ fontWeight: '700', fontSize: '14px', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              📊 FILTERS
-            </span>
-            <span onClick={resetFilters} style={{ fontSize: '12px', color: '#5B3FFF', cursor: 'pointer', fontWeight: '600', textDecoration: 'underline' }}>
-              Clear All
-            </span>
-          </div>
+      {/* 🎛️ Horizontal Top Filter Panel */}
+      <div style={horizontalFilterCard}>
+        <div style={filterHeaderRow}>
+          <span style={{ fontWeight: '700', fontSize: '13px', color: currentTheme.textMain, display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em' }}>
+            📊 CATALOG FILTER MATRIX
+          </span>
+          <span onClick={resetFilters} style={{ fontSize: '12px', color: '#5B3FFF', cursor: 'pointer', fontWeight: '600', textDecoration: 'underline' }}>
+            Clear All Filters
+          </span>
+        </div>
 
-          <div style={sidebarSectionTitle}>Search Catalog</div>
-          <div style={searchInputWrapper}>
-            <input 
-              type="text" 
-              placeholder="Enter formulation name..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              style={searchInput}
-            />
-            <span style={{ position: 'absolute', right: '12px', color: '#9CA3AF', fontSize: '14px' }}>🔍</span>
-          </div>
-
-          {/* LAYER 1: DEPARTMENTS */}
-          <div style={sidebarSectionTitle}>Departments</div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 15px 0' }}>
-            {['All Departments', 'Biologics', 'Solutions', 'Ophthalmic', 'General Medicine'].map((dept) => (
-              <li 
-                key={dept}
-                style={departmentItemStyle(selectedDepartment === dept)}
-                onClick={() => {
-                  setSelectedDepartment(dept);
-                  setSelectedType('All Types'); 
-                }}
-              >
-                <span>{dept}</span>
-                <span style={{ fontSize: '11px', opacity: 0.4 }}>{selectedDepartment === dept ? '▼' : '❯'}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* LAYER 2: DOSAGE FORMS (TYPES) */}
-          <div style={sidebarSectionTitle}>Medicine Type</div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {['All Types', 'Tablets', 'Capsules', 'Drops', 'Injections', 'Syrups'].map((type) => (
-              <li 
-                key={type}
-                style={typeItemStyle(selectedType === type)}
-                onClick={() => setSelectedType(type)}
-              >
-                <span>{type}</span>
-                <span style={{ fontSize: '10px', opacity: 0.3 }}>●</span>
-              </li>
-            ))}
-          </ul>
-
-          <div style={{ ...sidebarSectionTitle, marginTop: '25px' }}>Filter Options</div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#A1A1B5', cursor: 'pointer' }}>
-            <input 
-              type="checkbox" 
-              checked={featuredOnly}
-              onChange={(e) => setFeaturedOnly(e.target.checked)}
-              style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#5B3FFF' }}
-            />
-            Featured Formulations Only
-          </label>
-        </aside>
-
-        {/* Right Main Grid Catalog */}
-        <main style={mainContentArea}>
-          <div style={topActionBar}>
-            <div>Showing <strong style={{ color: '#FFFFFF' }}>{filteredProducts.length}</strong> formulations found</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              Sort By: 
-              <select style={{ padding: '6px 10px', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '6px', outline: 'none', fontSize: '13px', backgroundColor: '#08080A', color: '#FFFFFF' }}>
-                <option style={{ backgroundColor: '#08080A', color: '#FFFFFF' }}>Default Order</option>
-              </select>
+        <div style={filterControlsGrid}>
+          <div style={filterGroupStyle}>
+            <label style={filterLabelStyle}>Search Catalog</label>
+            <div style={searchInputWrapper}>
+              <input 
+                type="text" 
+                placeholder="Enter formulation name..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                style={searchInput}
+              />
+              <span style={{ position: 'absolute', right: '12px', color: currentTheme.textMuted, fontSize: '13px' }}>🔍</span>
             </div>
           </div>
-          
-          {loading ? (
-            <div style={{ color: '#A1A1B5', textAlign: 'center', padding: '40px' }}>Loading live repository data...</div>
-          ) : (
-            <div style={productGrid}>
-              {filteredProducts.map(product => (
+
+          <div style={filterGroupStyle}>
+            <label style={filterLabelStyle}>Department</label>
+            <select 
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+              style={selectDropdownStyle}
+            >
+              {['All Departments', 'Biologics', 'Solutions', 'Ophthalmic', 'General Medicine'].map((dept) => (
+                <option key={dept} value={dept} style={{ backgroundColor: currentTheme.inputBg, color: currentTheme.textMain }}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={filterGroupStyle}>
+            <label style={filterLabelStyle}>Medicine Type</label>
+            <select 
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              style={selectDropdownStyle}
+            >
+              {['All Types', 'Tablets', 'Capsules', 'Drops', 'Injections', 'Syrups'].map((type) => (
+                <option key={type} value={type} style={{ backgroundColor: currentTheme.inputBg, color: currentTheme.textMain }}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ ...filterGroupStyle, justifyContent: 'flex-end', height: '100%', paddingTop: '16px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: currentTheme.textMuted, cursor: 'pointer', fontWeight: '500' }}>
+              <input 
+                type="checkbox" 
+                checked={featuredOnly}
+                onChange={(e) => setFeaturedOnly(e.target.checked)}
+                style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#5B3FFF' }}
+              />
+              Featured Formulations Only
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid Content Area */}
+      <main style={{ width: '100%' }}>
+        <div style={topActionBar}>
+          <div>Showing <strong style={{ color: currentTheme.textMain }}>{filteredProducts.length}</strong> formulations found</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Sort By: 
+            <select 
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ padding: '6px 10px', border: `1px solid ${currentTheme.inputBorder}`, borderRadius: '6px', outline: 'none', fontSize: '13px', backgroundColor: currentTheme.inputBg, color: currentTheme.textMain }}
+            >
+              <option value="Default Order">Default Order</option>
+              <option value="Name (A-Z)">Name (A-Z)</option>
+              <option value="Name (Z-A)">Name (Z-A)</option>
+              <option value="Featured First">Featured First</option>
+            </select>
+          </div>
+        </div>
+        
+        {loading ? (
+          <div style={{ color: currentTheme.textMuted, textAlign: 'center', padding: '40px' }}>Loading live repository data...</div>
+        ) : (
+          <div style={productGrid}>
+            {filteredProducts.map(product => {
+              let imgSrc = '';
+              if (product.image) {
+                if (product.image.startsWith('http') || product.image.startsWith('blob:')) {
+                  imgSrc = product.image;
+                } else {
+                  const cleanPath = product.image.startsWith('/') ? product.image : `/${product.image}`;
+                  if (cleanPath.startsWith('/uploads/') && !cleanPath.startsWith('/public/uploads/')) {
+                    imgSrc = `${ASSET_URL}${cleanPath}`;
+                  } else if (!cleanPath.startsWith('/public/')) {
+                    imgSrc = `${ASSET_URL}${cleanPath}`;
+                  } else {
+                    imgSrc = `${BASE_URL}${cleanPath}`;
+                  }
+                }
+              }
+
+              return (
                 <div 
                   key={product.id} 
                   style={cardStyle}
@@ -269,15 +321,14 @@ function Products() {
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.borderColor = '#5B3FFF';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(91, 63, 255, 0.15)';
+                    e.currentTarget.style.boxShadow = darkMode ? '0 8px 24px rgba(91, 63, 255, 0.15)' : '0 8px 24px rgba(0, 0, 0, 0.08)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  {/* Micro Badges inside Card */}
                   <div style={cardBadgeContainer}>
                     {product.isFeatured && <span style={cardFeaturedBadge}>FEATURED</span>}
                     <span style={cardCategoryBadge}>{product.category.toUpperCase()}</span>
@@ -286,29 +337,35 @@ function Products() {
                     </span>
                   </div>
 
-                  {/* Medicine Packaging Image Frame */}
-                  {/* ✨ FIX 2: Wrapped properly inside standard bracket layout condition boundaries */}
                   <div style={imageContainer}>
-                    {product.image ? (
+                    {imgSrc ? (
                       <img 
-                        src={product.image.startsWith('http') ? product.image : `${BACKEND_BASE_URL}/public${product.image}`} 
+                        src={imgSrc} 
                         alt={product.name}
                         style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                         onError={(e) => { 
-                          e.target.style.display = 'none'; 
-                          e.target.parentNode.innerHTML = `<span style="color: #9CA3AF; font-size: 12px;">📦 [${product.name}]</span>`;
+                          const currentSrc = e.target.src;
+                          if (!e.target.dataset.retried) {
+                            e.target.dataset.retried = "true";
+                            if (currentSrc.includes('/public/')) {
+                              e.target.src = currentSrc.replace('/public/', '/');
+                            } else {
+                              e.target.src = `${ASSET_URL}/uploads/${product.image.replace(/^\/+/, '')}`;
+                            }
+                          } else {
+                            e.target.style.display = 'none'; 
+                            e.target.parentNode.innerHTML = `<span style="color: ${currentTheme.textMuted}; font-size: 12px;">📦 [${product.name}]</span>`;
+                          }
                         }} 
                       />
                     ) : (
-                      <span style={{ color: '#9CA3AF', fontSize: '12px' }}>📦 [{product.name}]</span>
+                      <span style={{ color: currentTheme.textMuted, fontSize: '12px' }}>📦 [{product.name}]</span>
                     )}
                   </div>
 
-                  {/* Typography metadata */}
                   <h3 style={productTitle}>{product.name}</h3>
                   <p style={productDesc}>{product.shortDescription}</p>
 
-                  {/* CTA Action Redirect Link */}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation(); 
@@ -316,22 +373,22 @@ function Products() {
                     }}
                     style={actionButtonStyle}
                     onMouseEnter={(e) => { e.target.style.backgroundColor = '#5B3FFF'; e.target.style.borderColor = '#5B3FFF'; e.target.style.color = '#FFF'; }}
-                    onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)'; e.target.style.color = '#FFFFFF'; }}
+                    onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.borderColor = currentTheme.inputBorder; e.target.style.color = currentTheme.textMain; }}
                   >
                     VIEW FORMULATION DETAILS <span>→</span>
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
+        )}
 
-          {!loading && filteredProducts.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px', color: '#A1A1B5', border: '1px dashed rgba(255, 255, 255, 0.15)', borderRadius: '8px', marginTop: '20px' }}>
-              No formulations found matching the selected filtering matrix.
-            </div>
-          )}
-        </main>
-      </div>
+        {!loading && filteredProducts.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px', color: currentTheme.textMuted, border: `1px dashed ${currentTheme.inputBorder}`, borderRadius: '12px', marginTop: '20px' }}>
+            No formulations found matching the selected filtering matrix.
+          </div>
+        )}
+      </main>
     </div>
   );
 }
